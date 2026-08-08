@@ -2,7 +2,7 @@ package libvirt
 
 import "core:c"
 
-foreign import lv "libvirt.so.0"
+foreign import lv "system:libvirt.so.0"
 
 virConnect :: struct  { } 
 
@@ -13,18 +13,26 @@ virDomain :: struct  { }
 virDomainPtr :: ^virDomain
 
 virDomainInfo :: struct {
-  state: u8,             // the running state, one of virDomainState
-  maxMem: c.ulong,       // unsigned long	maxMem	
-  memory: c.ulong,       // the maximum memory in KBytes allowed
-  nrVirtCpu: c.ushort,   // unsigned short	nrVirtCpu	the number of virtual CPUs for the domain
-  cpuTime: c.ulonglong   // unsigned long long	cpuTime	the CPU time used in nanoseconds
+  state:     u8,           // the running state, one of virDomainState
+  maxMem:    c.ulong,      // unsigned long	maxMem	
+  memory:    c.ulong,      // the maximum memory in KBytes allowed
+  nrVirtCpu: c.ushort,     // unsigned short	nrVirtCpu	the number of virtual CPUs for the domain
+  cpuTime:   c.ulonglong   // unsigned long long	cpuTime	the CPU time used in nanoseconds
 }
 
 virDomainInfoPtr :: ^virDomainInfo
 
-// typedef virConnect * virConnectPtr;
+virDomainFSInfo :: struct {
+    mountpoint: cstring,
+    name:       cstring,
+    fstype:     cstring,
+    ndevAlias:  c.size_t,
+    devAlias:   [^]cstring,
+}
 
-// virConnectPtr	virConnectOpen		(const char * name)
+virDomainFSInfoPtr :: ^virDomainFSInfo
+
+// --------------------------------------------------------
 
 foreign lv {
 
@@ -37,5 +45,7 @@ foreign lv {
   virDomainGetName :: proc(domain: virDomainPtr) -> cstring ---
 
   virDomainGetInfo :: proc(domain: virDomainPtr, info: virDomainInfoPtr) -> c.int ---
+
+  virDomainGetFSInfo :: proc(domain: virDomainPtr, info: ^[^]virDomainFSInfoPtr, flags: c.uint = 0) -> c.int ---
 
 }
