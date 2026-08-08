@@ -12,6 +12,15 @@ virDomain :: struct  { }
 
 virDomainPtr :: ^virDomain
 
+virDomainInfo :: struct {
+  state: u8,             // the running state, one of virDomainState
+  maxMem: c.ulong,       // unsigned long	maxMem	
+  memory: c.ulong,       // the maximum memory in KBytes allowed
+  nrVirtCpu: c.ushort,   // unsigned short	nrVirtCpu	the number of virtual CPUs for the domain
+  cpuTime: c.ulonglong   // unsigned long long	cpuTime	the CPU time used in nanoseconds
+}
+
+virDomainInfoPtr :: ^virDomainInfo
 
 // typedef virConnect * virConnectPtr;
 
@@ -21,16 +30,12 @@ foreign lv {
 
   virConnectOpen :: proc(name: cstring) -> virConnectPtr ---
 
-  // int	virConnectListAllDomains	(virConnectPtr conn, virDomainPtr ** domains, unsigned int flags)
-
   virConnectListAllDomains ::	proc(conn: virConnectPtr, domains: ^[^]virDomainPtr, flags: c.uint) -> c.int ---
-
-  // int	virConnectListDefinedDomains	(virConnectPtr conn, char ** const names, int maxnames)
 
   virConnectListDefinedDomains ::	proc(conn: virConnectPtr, names: [^]^u8, maxnames: c.int) -> c.int ---
 
-  // const char *	virDomainGetName	(virDomainPtr domain)
-
   virDomainGetName :: proc(domain: virDomainPtr) -> cstring ---
+
+  virDomainGetInfo :: proc(domain: virDomainPtr, info: virDomainInfoPtr) -> c.int ---
 
 }
