@@ -38,9 +38,9 @@ foreign lv {
 
   virConnectOpen :: proc(name: cstring) -> virConnectPtr ---
 
-  virConnectListAllDomains ::	proc(conn: virConnectPtr, domains: ^[^]virDomainPtr, flags: c.uint) -> c.int ---
+  virDomainLookupByName :: proc(conn: virConnectPtr, name: cstring) -> virDomainPtr ---
 
-  virConnectListDefinedDomains ::	proc(conn: virConnectPtr, names: [^]^u8, maxnames: c.int) -> c.int ---
+  virConnectListAllDomains ::	proc(conn: virConnectPtr, domains: ^[^]virDomainPtr, flags: c.uint) -> c.int ---
 
   virDomainGetName :: proc(domain: virDomainPtr) -> cstring ---
 
