@@ -6,30 +6,32 @@ import "core:strings"
 
 import "project:libvirt"
 
+URL :: "qemu+ssh://pete@dwt.mac.wales/system?keyfile=/home/pete/.ssh/swarm_ed25519&no_verify=1"
+
 // -- main ------------------------------------------------------
 
-vm :: proc(domain: libvirt.virDomainPtr) {
-  info: libvirt.virDomainInfo
-  fsinfo: [^]libvirt.virDomainFSInfoPtr
+vm :: proc(domain: ^libvirt.Domain) {
+  dminfo: libvirt.DomainInfo
+  fsinfo: [^]^libvirt.DomainFSInfo
 
-  name := libvirt.virDomainGetName(domain)
-  _ = libvirt.virDomainGetInfo(domain, &info)
-  n := libvirt.virDomainGetFSInfo(domain, &fsinfo)
-  fmt.printf("%p => %s\n%v\n", domain, name, info)
+  name := libvirt.DomainGetName(domain)
+  _ = libvirt.DomainGetInfo(domain, &dminfo)
+  n := libvirt.DomainGetFSInfo(domain, &fsinfo)
+  fmt.printf("%p => %s\n%v\n", domain, name, dminfo)
   for j in 0..<n {
-    fmt.printf("%v\n", fsinfo[j].name, fsinfo[j])
+    fmt.printf("%v\n", fsinfo[j]^)
     for k in 0..<fsinfo[j].ndevAlias {
-      fmt.printf("\n  alias = %s\n", fsinfo[j].devAlias[k])
+      fmt.printf("  alias = %s\n", fsinfo[j].devAlias[k])
     }
   }
 }
 
 main :: proc() {
-  domains: [^]libvirt.virDomainPtr
+  domains: [^]^libvirt.Domain
 
-  conn := libvirt.virConnectOpen("qemu+ssh://pete@dwt.mac.wales/system?keyfile=/home/pete/.ssh/swarm_ed25519&no_verify=1")
+  conn := libvirt.ConnectOpen(URL)
 
-  count := libvirt.virConnectListAllDomains(conn, &domains, 16)
+  count := libvirt.ConnectListAllDomains(conn, &domains, 16)
 
   fmt.printf("%p => domains[%d]\n", domains, count)
 
@@ -37,6 +39,6 @@ main :: proc() {
   //   vm(domains[i])
   // }
 
-  domain := libvirt.virDomainLookupByName(conn, "node1")
+  domain := libvirt.DomainLookupByName(conn, "node1")
   vm(domain)
 }

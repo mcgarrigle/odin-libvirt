@@ -4,15 +4,15 @@ import "core:c"
 
 foreign import lv "system:libvirt.so.0"
 
-virConnect :: struct  { } 
+Connect :: struct  { } 
 
-virConnectPtr :: ^virConnect
+ConnectPtr :: ^Connect
 
-virDomain :: struct  { }
+Domain :: struct  { }
 
-virDomainPtr :: ^virDomain
+DomainPtr :: ^Domain
 
-virDomainInfo :: struct {
+DomainInfo :: struct {
   state:     u8,           // the running state, one of virDomainState
   maxMem:    c.ulong,      // unsigned long	maxMem	
   memory:    c.ulong,      // the maximum memory in KBytes allowed
@@ -20,9 +20,9 @@ virDomainInfo :: struct {
   cpuTime:   c.ulonglong   // unsigned long long	cpuTime	the CPU time used in nanoseconds
 }
 
-virDomainInfoPtr :: ^virDomainInfo
+DomainInfoPtr :: ^DomainInfo
 
-virDomainFSInfo :: struct {
+DomainFSInfo :: struct {
     mountpoint: cstring,
     name:       cstring,
     fstype:     cstring,
@@ -30,22 +30,28 @@ virDomainFSInfo :: struct {
     devAlias:   [^]cstring,
 }
 
-virDomainFSInfoPtr :: ^virDomainFSInfo
+DomainFSInfoPtr :: ^DomainFSInfo
 
 // --------------------------------------------------------
 
 foreign lv {
 
-  virConnectOpen :: proc(name: cstring) -> virConnectPtr ---
+  @(link_name="virConnectOpen")
+  ConnectOpen :: proc(name: cstring) -> ^Connect ---
 
-  virDomainLookupByName :: proc(conn: virConnectPtr, name: cstring) -> virDomainPtr ---
+  @(link_name="virDomainLookupByName")
+  DomainLookupByName :: proc(conn: ^Connect, name: cstring) -> ^Domain ---
 
-  virConnectListAllDomains ::	proc(conn: virConnectPtr, domains: ^[^]virDomainPtr, flags: c.uint) -> c.int ---
+  @(link_name="virConnectListAllDomains")
+  ConnectListAllDomains ::	proc(conn: ^Connect, domains: ^[^]^Domain, flags: c.uint) -> c.int ---
 
-  virDomainGetName :: proc(domain: virDomainPtr) -> cstring ---
+  @(link_name="virDomainGetName")
+  DomainGetName :: proc(domain: ^Domain) -> cstring ---
 
-  virDomainGetInfo :: proc(domain: virDomainPtr, info: virDomainInfoPtr) -> c.int ---
+  @(link_name="virDomainGetInfo")
+  DomainGetInfo :: proc(domain: ^Domain, info: ^DomainInfo) -> c.int ---
 
-  virDomainGetFSInfo :: proc(domain: virDomainPtr, info: ^[^]virDomainFSInfoPtr, flags: c.uint = 0) -> c.int ---
+  @(link_name="virDomainGetFSInfo")
+  DomainGetFSInfo :: proc(domain: ^Domain, info: ^[^]^DomainFSInfo, flags: c.uint = 0) -> c.int ---
 
 }
