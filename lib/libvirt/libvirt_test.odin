@@ -5,38 +5,31 @@ import "core:os"
 import "core:log"
 import "core:encoding/xml"
 
-import "project:libvirt"
+import vir "project:libvirt"
+
+URL :: "qemu+ssh://pete@dwt.mac.wales/system?keyfile=/home/pete/.ssh/swarm_ed25519&no_verify=1"
 
 // ---------------------------------------------------------------------
 
-find_children :: proc(doc: ^xml.Document, parent: xml.Element_ID, ident: string) -> [dynamic]xml.Element {
-  res : [dynamic]xml.Element
-  i := 0
-  id, found := xml.find_child_by_ident(doc, parent, ident, i) 
-  for found {
-    append(&res, doc.elements[id]) 
-    i = i + 1
-    id, found = xml.find_child_by_ident(doc, parent, ident, i) 
-  }
-  return res
+fixture_xml_doc :: proc() -> ^xml.Document {
+  text, _ := os.read_entire_file("node1.xml", context.allocator)
+  doc, err := xml.parse(text)
+  return doc
 }
 
 @(test)
 test_parse_domain_xml :: proc(t: ^testing.T) {
-  text, _ := os.read_entire_file("node1.xml", context.allocator)
-  doc, err := xml.parse(text)
+  doc := fixture_xml_doc()
   devices, devices_ok := xml.find_child_by_ident(doc, 0, "devices") 
-  log.info(doc.elements[devices])
+  // log.info(doc.elements[devices])
   disks := find_children(doc, devices, "disk")
-  log.info(disks)
-/*  i := 0
-  disk, disk_ok := xml.find_child_by_ident(doc, devices, "disk", i) 
-  for disk_ok {
-    log.info(i, disk_ok, doc.elements[disk])
-    // log.info(doc.elements[disk])
-    i = i + 1
-    if i == 5 do break
-    disk, disk_ok = xml.find_child_by_ident(doc, devices, "disk", i) 
-  }
-  */
+  // log.info(disks)
+}
+
+@(test)
+test_domain :: proc(t: ^testing.T) {
+  conn := vir.ConnectOpen(URL)
+  domain := vir.DomainLookupByName(conn, "node1")
+  di := vir.DomainGetDiskInfo(domain)
+  // log.info(di)
 }
