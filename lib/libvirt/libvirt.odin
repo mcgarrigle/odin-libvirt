@@ -29,6 +29,16 @@ DomainState :: enum u32 {
   Last        =	8   // (0x8)	NB: this enum value will increase over time as new states are added to the libvirt API. It reflects the last state supported by this version of the libvirt API.
 }
 
+DomainCreateFlags :: enum u32 {
+    None        = 0,       // Default behavior (Since: 0.0.1)
+    Paused      = 1 << 0,  // Launch guest in paused state (Since: 0.8.2)
+    Autodestroy = 1 << 1,  // Automatically kill guest when virConnectPtr is closed (Since: 0.9.3)
+    BypassCache = 1 << 2,  // Avoid file system cache pollution (Since: 0.9.4)
+    ForceBoot   = 1 << 3,  // Boot, discarding any managed save (Since: 0.9.5)
+    Validate    = 1 << 4,  // Validate the XML document against schema (Since: 1.2.12)
+    ResetNVRAM  = 1 << 5   // Re-initialize NVRAM/varstore from template (Since: 8.1.0)
+} 
+
 DomainInfo :: struct {
   state:     DomainState,  // the running state, one of virDomainState
   maxMem:    c.ulong,      // unsigned long	maxMem	
@@ -83,6 +93,9 @@ foreign vir {
 
   @(link_name="virDomainGetState")
   DomainGetState :: proc(domain: ^Domain, state: ^DomainState, reason: ^c.int, flags: c.uint=0) -> c.int ---
+
+  @(link_name="virDomainCreateWithFlags")
+  DomainCreateWithFlags :: proc(domain: ^Domain, flags: DomainCreateFlags) -> c.int ---
 
 }
 

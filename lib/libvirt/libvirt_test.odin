@@ -11,20 +11,19 @@ URL :: "qemu+ssh://pete@dwt.mac.wales/system?keyfile=/home/pete/.ssh/swarm_ed255
 
 // ---------------------------------------------------------------------
 
+conn   := vir.ConnectOpen(URL)
+domain := vir.DomainLookupByName(conn, "node1")
+
 @(test)
 test_domain_get_info :: proc(t: ^testing.T) {
   di: DomainInfo
 
-  conn := vir.ConnectOpen(URL)
-  domain := vir.DomainLookupByName(conn, "node1")
   vir.DomainGetInfo(domain, &di)
   log.info(di)
 }
 
 @(test)
 test_domain_get_disk_info :: proc(t: ^testing.T) {
-  conn := vir.ConnectOpen(URL)
-  domain := vir.DomainLookupByName(conn, "node1")
   di := vir.DomainGetDiskInfo(domain)
   log.info(di)
 }
@@ -34,8 +33,6 @@ test_domain_get_state :: proc(t: ^testing.T) {
   state: DomainState
   reason: i32
 
-  conn := vir.ConnectOpen(URL)
-  domain := vir.DomainLookupByName(conn, "node1")
   _ = vir.DomainGetState(domain, &state, reason=&reason)
   log.info(state, reason)
 }
