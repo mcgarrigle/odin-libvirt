@@ -9,11 +9,11 @@ import xp "project:xmlpath"
 
 foreign import vir "system:libvirt.so.0"
 
-Connect :: struct  { } 
+Connect :: struct  {} 
 
 ConnectPtr :: ^Connect
 
-Domain :: struct  { }
+Domain :: struct  {}
 
 DomainPtr :: ^Domain
 
@@ -30,14 +30,40 @@ DomainState :: enum u32 {
 }
 
 DomainCreateFlags :: enum u32 {
-    None        = 0,       // Default behavior (Since: 0.0.1)
-    Paused      = 1 << 0,  // Launch guest in paused state (Since: 0.8.2)
-    Autodestroy = 1 << 1,  // Automatically kill guest when virConnectPtr is closed (Since: 0.9.3)
-    BypassCache = 1 << 2,  // Avoid file system cache pollution (Since: 0.9.4)
-    ForceBoot   = 1 << 3,  // Boot, discarding any managed save (Since: 0.9.5)
-    Validate    = 1 << 4,  // Validate the XML document against schema (Since: 1.2.12)
-    ResetNVRAM  = 1 << 5   // Re-initialize NVRAM/varstore from template (Since: 8.1.0)
+  None        = 0,       // Default behavior (Since: 0.0.1)
+  Paused      = 1 << 0,  // Launch guest in paused state (Since: 0.8.2)
+  Autodestroy = 1 << 1,  // Automatically kill guest when virConnectPtr is closed (Since: 0.9.3)
+  BypassCache = 1 << 2,  // Avoid file system cache pollution (Since: 0.9.4)
+  ForceBoot   = 1 << 3,  // Boot, discarding any managed save (Since: 0.9.5)
+  Validate    = 1 << 4,  // Validate the XML document against schema (Since: 1.2.12)
+  ResetNVRAM  = 1 << 5   // Re-initialize NVRAM/varstore from template (Since: 8.1.0)
 } 
+
+ConnectListAllDomainsFlags :: enum u32 {
+  All           = 0,
+  Active        = 1 << 0, // (Since: 0.9.13)
+  Inactive      = 1 << 1, // (Since: 0.9.13)
+
+  Persistent    = 1 << 2, // (Since: 0.9.13)
+  Transient     = 1 << 3, // (Since: 0.9.13)
+
+  Running       = 1 << 4, // (Since: 0.9.13)
+  Paused        = 1 << 5, // (Since: 0.9.13)
+  Shutoff       = 1 << 6, // (Since: 0.9.13)
+  Other         = 1 << 7, // (Since: 0.9.13)
+
+  ManagedSave   = 1 << 8, // (Since: 0.9.13)
+  NoManagedSave = 1 << 9, // (Since: 0.9.13)
+
+  AutoStart     = 1 << 10, // (Since: 0.9.13)
+  NoAutoStart   = 1 << 11, // (Since: 0.9.13)
+
+  HasSnapshot   = 1 << 12, // (Since: 0.9.13)
+  NoSnapshot    = 1 << 13, // (Since: 0.9.13)
+
+  HasCheckpoint = 1 << 14, // (Since: 5.6.0)
+  NoCheckpoint  = 1 << 15  // (Since: 5.6.0)
+}
 
 DomainInfo :: struct {
   state:     DomainState,  // the running state, one of virDomainState
@@ -50,11 +76,11 @@ DomainInfo :: struct {
 DomainInfoPtr :: ^DomainInfo
 
 DomainFSInfo :: struct {
-    mountpoint: cstring,
-    name:       cstring,
-    fstype:     cstring,
-    ndevAlias:  c.size_t,
-    devAlias:   [^]cstring,
+  mountpoint: cstring,
+  name:       cstring,
+  fstype:     cstring,
+  ndevAlias:  c.size_t,
+  devAlias:   [^]cstring,
 }
 
 DomainFSInfoPtr :: ^DomainFSInfo
@@ -77,7 +103,7 @@ foreign vir {
   DomainLookupByName :: proc(conn: ^Connect, name: cstring) -> ^Domain ---
 
   @(link_name="virConnectListAllDomains")
-  ConnectListAllDomains ::	proc(conn: ^Connect, domains: ^[^]^Domain, flags: c.uint) -> c.int ---
+  ConnectListAllDomains :: proc(conn: ^Connect, domains: ^[^]^Domain, flags: ConnectListAllDomainsFlags=.All) -> c.int ---
 
   @(link_name="virDomainGetName")
   DomainGetName :: proc(domain: ^Domain) -> cstring ---
@@ -95,7 +121,7 @@ foreign vir {
   DomainGetState :: proc(domain: ^Domain, state: ^DomainState, reason: ^c.int, flags: c.uint=0) -> c.int ---
 
   @(link_name="virDomainCreateWithFlags")
-  DomainCreateWithFlags :: proc(domain: ^Domain, flags: DomainCreateFlags) -> c.int ---
+  DomainCreateWithFlags :: proc(domain: ^Domain, flags: DomainCreateFlags=.None) -> c.int ---
 
 }
 

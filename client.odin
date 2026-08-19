@@ -10,14 +10,14 @@ URL :: "qemu+ssh://pete@dwt.mac.wales/system?keyfile=/home/pete/.ssh/swarm_ed255
 
 // -- main ------------------------------------------------------
 
-vm :: proc(domain: ^libvirt.Domain) {
+vm :: proc(domain: ^vir.Domain) {
   dminfo: vir.DomainInfo
   fsinfo: [^]^vir.DomainFSInfo
 
   name := vir.DomainGetName(domain)
   _ = vir.DomainGetInfo(domain, &dminfo)
   n := vir.DomainGetFSInfo(domain, &fsinfo)
-  fmt.printf("%p => %s\n%v\n", domain, name, dminfo)
+  fmt.printf("\n%p => %s\n%v\n", domain, name, dminfo)
   for j in 0..<n {
     fmt.printf("%v\n", fsinfo[j]^)
     for k in 0..<fsinfo[j].ndevAlias {
@@ -30,15 +30,12 @@ main :: proc() {
   domains: [^]^vir.Domain
 
   conn := vir.ConnectOpen(URL)
-
-  count := vir.ConnectListAllDomains(conn, &domains, 16)
+  count := vir.ConnectListAllDomains(conn, &domains)
 
   fmt.printf("%p => domains[%d]\n", domains, count)
 
-  // for i in 0..<count {
-  //   vm(domains[i])
-  // }
+  for i in 0..<count {
+    vm(domains[i])
+  }
 
-  domain := vir.DomainLookupByName(conn, "node1")
-  vm(domain)
 }
