@@ -17,8 +17,20 @@ Domain :: struct  { }
 
 DomainPtr :: ^Domain
 
+DomainState :: enum u32 {
+  NoState     =	0,  // (0x0)	no state
+  Running     =	1,  // (0x1)	the domain is running
+  Blocked     =	2,  // (0x2)	the domain is blocked on resource
+  Paused      =	3,  // (0x3)	the domain is paused by user
+  Shutdown    =	4,  // (0x4)	the domain is being shut down
+  Shutoff     =	5,  // (0x5)	the domain is shut off
+  Crashed     =	6,  // (0x6)	the domain is crashed
+  PMSuspended =	7,  // (0x7)	the domain is suspended by guest power management
+  Last        =	8   // (0x8)	NB: this enum value will increase over time as new states are added to the libvirt API. It reflects the last state supported by this version of the libvirt API.
+}
+
 DomainInfo :: struct {
-  state:     u8,           // the running state, one of virDomainState
+  state:     DomainState,  // the running state, one of virDomainState
   maxMem:    c.ulong,      // unsigned long	maxMem	
   memory:    c.ulong,      // the maximum memory in KBytes allowed
   nrVirtCpu: c.ushort,     // unsigned short	nrVirtCpu	the number of virtual CPUs for the domain
@@ -67,7 +79,10 @@ foreign vir {
   DomainGetInfo :: proc(domain: ^Domain, info: ^DomainInfo) -> c.int ---
 
   @(link_name="virDomainGetFSInfo")
-  DomainGetFSInfo :: proc(domain: ^Domain, info: ^[^]^DomainFSInfo, flags: c.uint= 0) -> c.int ---
+  DomainGetFSInfo :: proc(domain: ^Domain, info: ^[^]^DomainFSInfo, flags: c.uint=0) -> c.int ---
+
+  @(link_name="virDomainGetState")
+  DomainGetState :: proc(domain: ^Domain, state: ^DomainState, reason: ^c.int, flags: c.uint=0) -> c.int ---
 
 }
 
