@@ -5,6 +5,8 @@ import "core:slice"
 import "core:log"
 import "core:encoding/xml"
 
+import xp "project:xmlpath"
+
 foreign import vir "system:libvirt.so.0"
 
 Connect :: struct  { } 
@@ -36,6 +38,7 @@ DomainFSInfo :: struct {
 DomainFSInfoPtr :: ^DomainFSInfo
 
 DomainDiskInfo :: struct {
+  type:   string,
   device: string,
   source: string,
   target: string
@@ -68,41 +71,21 @@ foreign vir {
 
 }
 
-find_children :: proc(doc: ^xml.Document, parent: xml.Element_ID, ident: string) -> [dynamic]xml.Element {
-  res: [dynamic]xml.Element
-  i := 0
-  id, found := xml.find_child_by_ident(doc, parent, ident, i) 
-  for found {
-    append(&res, doc.elements[id]) 
-    i += 1
-    id, found = xml.find_child_by_ident(doc, parent, ident, i) 
-  }
-  return res
-}
+// --------------------------------------------------------
 
-find_attribute :: proc(element: xml.Element, name: string) -> string {
-  for attr in element.attribs {
-    if attr.key == name do return attr.val
-  }
-  return ""
-}
-
-DomainGetDiskInfo :: proc(domain: ^Domain) -> [dynamic]DomainDiskInfo {
+DomainGetDiskInfo :: proc(domain: ^Domain) -> []DomainDiskInfo {
   res: [dynamic]DomainDiskInfo
 
   text := DomainGetXMLDesc(domain)
   doc, err := xml.parse(string(text))
-  devices, devices_ok := xml.find_child_by_ident(doc, 0, "devices") 
-  disks := find_children(doc, devices, "disk")
-  for disk in disks {
-    attr := find_attribute(disk, "type")
-    log.info("attr =", attr) 
-    attr = find_attribute(disk, "device")
-    log.info("attr =", attr) 
+  disks := xp.select_elements(doc, xp.root, "devices/disk")
+  for disk, i in disks {
+    info: DomainDiskInfo
+    info.type   = xp.attribute(doc, disk, "type")
+    info.device = xp.attribute(doc, disk, "device")
+    info.source = xp.select_attribute(doc, disk, "source", "file")
+    info.target = xp.select_attribute(doc, disk, "target", "dev")
+    append(&res, info)
   }
-  // info[0].device = "disk"
-  // info[0].source = "disk.qcow2"
-  // info[0].target = "vda"
-  return res
+  return res[:]
 }
-
