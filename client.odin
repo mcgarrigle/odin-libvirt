@@ -16,8 +16,12 @@ vm :: proc(domain: ^vir.Domain) {
 
   name := vir.DomainGetName(domain)
   _ = vir.DomainGetInfo(domain, &dminfo)
-  n := vir.DomainGetFSInfo(domain, &fsinfo)
   fmt.printf("\n%p => %s\n%v\n", domain, name, dminfo)
+  di := vir.DomainGetDiskInfo(domain)
+  for d in di {
+    fmt.println(d)
+  }
+  n := vir.DomainGetFSInfo(domain, &fsinfo)
   for j in 0..<n {
     fmt.printf("%v\n", fsinfo[j]^)
     for k in 0..<fsinfo[j].ndevAlias {

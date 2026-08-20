@@ -65,6 +65,12 @@ ConnectListAllDomainsFlags :: enum u32 {
   NoCheckpoint  = 1 << 15  // (Since: 5.6.0)
 }
 
+DomainDestroyFlagValues :: enum u32 {
+  Default    = 0,       // Default behavior - could lead to data loss!! (Since: 0.9.10)
+  Graceful   = 1 << 0,  // only SIGTERM, no SIGKILL (Since: 0.9.10)
+  RemoveLogs = 1 << 1,  // remove VM logs on destroy (Since: 8.3.0)
+}
+
 DomainInfo :: struct {
   state:     DomainState,  // the running state, one of virDomainState
   maxMem:    c.ulong,      // unsigned long	maxMem	
@@ -122,6 +128,12 @@ foreign vir {
 
   @(link_name="virDomainCreateWithFlags")
   DomainCreateWithFlags :: proc(domain: ^Domain, flags: DomainCreateFlags=.None) -> c.int ---
+
+  @(link_name="virDomainDestroy")
+  DomainDestroy :: proc(domain: Domain) -> c.int ---
+
+  @(link_name="virDomainDestroyFlags")
+  DomainDestroyFlags :: proc(domain: Domain, flags: DomainDestroyFlagValues) -> c.int ---
 
 }
 
