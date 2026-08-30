@@ -2,7 +2,9 @@ package libvirt
 
 import "core:c"
 import "core:slice"
+import "core:strings"
 import "core:log"
+import "core:fmt"
 import "core:encoding/xml"
 
 import xp "project:xmlpath"
@@ -11,28 +13,28 @@ foreign import vir "system:libvirt.so.0"
 
 Connect :: struct  {} 
 
-ConnectPtr :: ^Connect
-
 Domain :: struct  {}
 
-DomainPtr :: ^Domain
+VIR_UUID_BUFLEN :: 16
+VIR_UUID_STRING_LEN :: 36
+VIR_UUID_STRING_BUFLEN :: 36+1
 
 DomainState :: enum u32 {
-  NoState     =	0,  // (0x0)	no state
-  Running     =	1,  // (0x1)	the domain is running
-  Blocked     =	2,  // (0x2)	the domain is blocked on resource
-  Paused      =	3,  // (0x3)	the domain is paused by user
-  Shutdown    =	4,  // (0x4)	the domain is being shut down
-  Shutoff     =	5,  // (0x5)	the domain is shut off
-  Crashed     =	6,  // (0x6)	the domain is crashed
-  PMSuspended =	7,  // (0x7)	the domain is suspended by guest power management
-  Last        =	8   // (0x8)	NB: this enum value will increase over time as new states are added to the libvirt API. It reflects the last state supported by this version of the libvirt API.
+  NoState     = 0,  // (0x0) no state
+  Running     = 1,  // (0x1) the domain is running
+  Blocked     = 2,  // (0x2) the domain is blocked on resource
+  Paused      = 3,  // (0x3) the domain is paused by user
+  Shutdown    = 4,  // (0x4) the domain is being shut down
+  Shutoff     = 5,  // (0x5) the domain is shut off
+  Crashed     = 6,  // (0x6) the domain is crashed
+  PMSuspended = 7,  // (0x7) the domain is suspended by guest power management
+  Last        = 8   // (0x8) NB: this enum value will increase over time as new states are added to the libvirt API. It reflects the last state supported by this version of the libvirt API.
 }
 
 DomainCreateFlags :: enum u32 {
   None        = 0,       // Default behavior (Since: 0.0.1)
   Paused      = 1 << 0,  // Launch guest in paused state (Since: 0.8.2)
-  Autodestroy = 1 << 1,  // Automatically kill guest when virConnectPtr is closed (Since: 0.9.3)
+  Autodestroy = 1 << 1,  // Automatically kill guest when connection is closed (Since: 0.9.3)
   BypassCache = 1 << 2,  // Avoid file system cache pollution (Since: 0.9.4)
   ForceBoot   = 1 << 3,  // Boot, discarding any managed save (Since: 0.9.5)
   Validate    = 1 << 4,  // Validate the XML document against schema (Since: 1.2.12)
@@ -73,13 +75,11 @@ DomainDestroyFlagValues :: enum u32 {
 
 DomainInfo :: struct {
   state:     DomainState,  // the running state, one of virDomainState
-  maxMem:    c.ulong,      // unsigned long	maxMem	
+  maxMem:    c.ulong,      // unsigned long maxMem
   memory:    c.ulong,      // the maximum memory in KBytes allowed
-  nrVirtCpu: c.ushort,     // unsigned short	nrVirtCpu	the number of virtual CPUs for the domain
-  cpuTime:   c.ulonglong   // unsigned long long	cpuTime	the CPU time used in nanoseconds
+  nrVirtCpu: c.ushort,     // the number of virtual CPUs for the domain
+  cpuTime:   c.ulonglong   // the CPU time used in nanoseconds
 }
-
-DomainInfoPtr :: ^DomainInfo
 
 DomainFSInfo :: struct {
   mountpoint: cstring,
@@ -88,8 +88,6 @@ DomainFSInfo :: struct {
   ndevAlias:  c.size_t,
   devAlias:   [^]cstring,
 }
-
-DomainFSInfoPtr :: ^DomainFSInfo
 
 DomainDiskInfo :: struct {
   type:   string,
@@ -112,10 +110,10 @@ foreign vir {
   ConnectListAllDomains :: proc(conn: ^Connect, domains: ^[^]^Domain, flags: ConnectListAllDomainsFlags=.All) -> c.int ---
 
   @(link_name="virDomainGetName")
-  DomainGetName :: proc(domain: ^Domain) -> cstring ---
+  _DomainGetName :: proc(domain: ^Domain) -> cstring ---
 
   @(link_name="virDomainGetXMLDesc")
-  DomainGetXMLDesc :: proc(domain: ^Domain, flags: c.uint=0) -> cstring ---
+  _DomainGetXMLDesc :: proc(domain: ^Domain, flags: c.uint=0) -> cstring ---
 
   @(link_name="virDomainGetInfo")
   DomainGetInfo :: proc(domain: ^Domain, info: ^DomainInfo) -> c.int ---
@@ -135,15 +133,63 @@ foreign vir {
   @(link_name="virDomainDestroyFlags")
   DomainDestroyFlags :: proc(domain: Domain, flags: DomainDestroyFlagValues) -> c.int ---
 
+  @(link_name="virDomainGetUUID")
+  DomainGetUUID :: proc(domain: ^Domain) -> [VIR_UUID_BUFLEN]u8 ---
+
+  @(link_name="virDomainGetUUIDString")
+  _DomainGetUUIDString :: proc(domain: ^Domain, uuid: [^]u8) -> c.int ---
+
+}
+
+DomainGetUUIDString :: proc(domain: ^Domain) -> string {
+  id: [VIR_UUID_STRING_BUFLEN]u8
+
+  err := _DomainGetUUIDString(domain, &id[0])
+  builder := strings.builder_make()
+  strings.write_bytes(&builder, id[:VIR_UUID_STRING_LEN])
+  return strings.to_string(builder)
+}
+
+DomainGetName :: proc(domain: ^Domain) -> string {
+  return string(_DomainGetName(domain))
+}
+
+DomainGetXMLDesc :: proc(domain: ^Domain) -> string {
+  return string(_DomainGetXMLDesc(domain))
 }
 
 // --------------------------------------------------------
+
+DomainDetails :: struct {
+  using info: DomainInfo,
+  uuid: string,
+  name: string
+}
+
+domain_get_details :: proc(domain: ^Domain) -> DomainDetails {
+  d: DomainDetails
+  d.uuid = DomainGetUUIDString(domain)
+  d.name = DomainGetName(domain)
+  _ = DomainGetInfo(domain, &d.info)
+  return d
+}
+
+list :: proc(conn: ^Connect) -> []DomainDetails {
+  domains: [^]^Domain
+  res: [dynamic]DomainDetails
+
+  count := ConnectListAllDomains(conn, &domains)
+  for i in 0..<count {
+    append(&res, domain_get_details(domains[i]))
+  }
+  return res[:]
+}
 
 DomainGetDiskInfo :: proc(domain: ^Domain) -> []DomainDiskInfo {
   res: [dynamic]DomainDiskInfo
 
   text := DomainGetXMLDesc(domain)
-  doc, err := xml.parse(string(text))
+  doc, err := xml.parse(text)
   disks := xp.select_elements(doc, xp.root, "devices/disk")
   for disk, i in disks {
     info: DomainDiskInfo

@@ -7,7 +7,7 @@ import "core:encoding/xml"
 
 import vir "project:libvirt"
 
-URL :: "qemu+ssh://pete@dwt.mac.wales/system?keyfile=/home/pete/.ssh/swarm_ed25519&no_verify=1"
+URL :: "qemu+ssh://pete@smol.mac.wales/system?keyfile=/home/pete/.ssh/swarm_ed25519&no_verify=1"
 
 // ---------------------------------------------------------------------
 
