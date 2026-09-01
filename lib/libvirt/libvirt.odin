@@ -81,19 +81,19 @@ DomainInfo :: struct {
   cpuTime:   c.ulonglong   // the CPU time used in nanoseconds
 }
 
+DomainDiskInfo :: struct {
+  type:   string,
+  device: string,
+  source: string,
+  target: string
+}
+
 DomainFSInfo :: struct {
   mountpoint: cstring,
   name:       cstring,
   fstype:     cstring,
   ndevAlias:  c.size_t,
   devAlias:   [^]cstring,
-}
-
-DomainDiskInfo :: struct {
-  type:   string,
-  device: string,
-  source: string,
-  target: string
 }
 
 // --------------------------------------------------------
@@ -133,6 +133,9 @@ foreign vir {
   @(link_name="virDomainDestroyFlags")
   DomainDestroyFlags :: proc(domain: Domain, flags: DomainDestroyFlagValues) -> c.int ---
 
+  @(link_name="virDomainGetID")
+  DomainGetID :: proc(domain: ^Domain) -> c.int ---
+
   @(link_name="virDomainGetUUID")
   DomainGetUUID :: proc(domain: ^Domain) -> [VIR_UUID_BUFLEN]u8 ---
 
@@ -162,15 +165,19 @@ DomainGetXMLDesc :: proc(domain: ^Domain) -> string {
 
 DomainDetails :: struct {
   using info: DomainInfo,
+  domain: ^Domain,
+  id:   c.int,
   uuid: string,
   name: string
 }
 
 domain_get_details :: proc(domain: ^Domain) -> DomainDetails {
   d: DomainDetails
-  d.uuid = DomainGetUUIDString(domain)
-  d.name = DomainGetName(domain)
-  _ = DomainGetInfo(domain, &d.info)
+  _        = DomainGetInfo(domain, &d.info)
+  d.domain = domain
+  d.id     = DomainGetID(domain)
+  d.uuid   = DomainGetUUIDString(domain)
+  d.name   = DomainGetName(domain)
   return d
 }
 
