@@ -12,13 +12,6 @@ import vir "project:libvirt"
 
 URL :: "dwt"
 
-decorations :: table.Decorations {
-  "┌", "┬", "┐",
-  "├", "┼", "┤",
-  "└", "┴", "┘",
-  "│", "─",
-}
-
 // -- main ------------------------------------------------------
 
 vm :: proc(domain: ^vir.Domain) {
@@ -41,41 +34,10 @@ vm :: proc(domain: ^vir.Domain) {
   }
 }
 
-write_simple_table :: proc(w: io.Writer, tbl: ^table.Table, width_proc: table.Width_Proc = table.unicode_width_proc) {
-  table.build(tbl, width_proc)
-
-  width := 0
-  for col in 0..<tbl.nr_cols {
-    width = width + tbl.colw[col] + tbl.lpad + tbl.rpad
-  }
-
-  for row in 0..<tbl.nr_rows {
-    for col in 0..<tbl.nr_cols {
-      table.write_table_cell(w, tbl, row, col)
-    }
-    io.write_byte(w, '\n')
-    if tbl.has_header_row && row == table.header_row(tbl) {
-      table.write_byte_repeat(w, width, '-')
-      io.write_byte(w, '\n')
-    }
-  }
-}
-
-write_stream_table :: proc(w: io.Writer, tbl: ^table.Table, width_proc: table.Width_Proc = table.unicode_width_proc) {
-  table.build(tbl, width_proc)
-  for row in 0..<tbl.nr_rows {
-    for col in 0..<tbl.nr_cols {
-      cell := table.get_cell(tbl, row, col)
-      io.write_string(w, cell.text)
-      io.write_byte(w, '\t')
-    }
-    io.write_byte(w, '\n')
-  }
-}
-
 id_to_string :: proc(id: i32) -> string {
-  if id == -1 do return "-"
   buf := make([]byte, 10)
+  buf[0] = '-'
+  if id == -1 do return string(buf)
   return strconv.write_int(buf[:], i64(id), 10)
 }
 
@@ -95,17 +57,9 @@ create_domain_table :: proc(domains: []vir.DomainDetails) -> ^table.Table {
   return tbl
 }
 
-render_table :: proc(tbl: ^table.Table) {
-  stdout := table.stdio_writer()
-  table.write_decorated_table(stdout, tbl, decorations)
-  write_simple_table(stdout, tbl)
-  write_stream_table(stdout, tbl)
-}
-
 main :: proc() {
-  domains: [^]^vir.Domain
+  // domains: [^]^vir.Domain
 
-  conn := vir.ConnectOpen(URL)
   // count := vir.ConnectListAllDomains(conn, &domains)
 
   // fmt.printf("%p => domains[%d]\n", domains, count)
@@ -114,7 +68,9 @@ main :: proc() {
   //   vm(domains[i])
   // }
 
-  m := vir.list(conn)
-  t := create_domain_table(m)
-  render_table(t)
+  conn := vir.ConnectOpen(URL)
+
+  domains := vir.list(conn)
+  tab := create_domain_table(domains)
+  render_table(tab, .Lines)
 }
