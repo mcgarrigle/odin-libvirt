@@ -10,7 +10,7 @@ import "core:text/table"
 
 import vir "project:libvirt"
 
-URL :: "dwt"
+URL :: "smol"
 
 // -- main ------------------------------------------------------
 
@@ -69,6 +69,13 @@ main :: proc() {
   // }
 
   conn := vir.ConnectOpen(URL)
+
+  pools: [^]^vir.StoragePool
+  count := vir.ConnectListAllStoragePools(conn, &pools)
+  fmt.printf("%p => pools[%d]\n", pools, count)
+  for i in 0..<count {
+    fmt.printf("%s\n", string(vir._StoragePoolGetName(pools[i])))
+  }
 
   domains := vir.list(conn)
   tab := create_domain_table(domains)

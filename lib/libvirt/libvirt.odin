@@ -15,6 +15,8 @@ Connect :: struct  {}
 
 Domain :: struct  {}
 
+StoragePool :: struct  {}
+
 VIR_UUID_BUFLEN :: 16
 VIR_UUID_STRING_LEN :: 36
 VIR_UUID_STRING_BUFLEN :: 36+1
@@ -73,6 +75,32 @@ DomainDestroyFlagValues :: enum u32 {
   RemoveLogs = 1 << 1,  // remove VM logs on destroy (Since: 8.3.0)
 }
 
+ConnectListAllStoragePoolsFlags :: enum u32 {
+  VIR_CONNECT_LIST_STORAGE_POOLS_INACTIVE      = 1 << 0, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE        = 1 << 1, // (Since: 0.10.2)
+
+  VIR_CONNECT_LIST_STORAGE_POOLS_PERSISTENT    = 1 << 2, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_TRANSIENT     = 1 << 3, // (Since: 0.10.2)
+
+  VIR_CONNECT_LIST_STORAGE_POOLS_AUTOSTART     = 1 << 4, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_NO_AUTOSTART  = 1 << 5, // (Since: 0.10.2)
+
+  VIR_CONNECT_LIST_STORAGE_POOLS_DIR           = 1 << 6, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_FS            = 1 << 7, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_NETFS         = 1 << 8, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_LOGICAL       = 1 << 9, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_DISK          = 1 << 10, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_ISCSI         = 1 << 11, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_SCSI          = 1 << 12, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_MPATH         = 1 << 13, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_RBD           = 1 << 14, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_SHEEPDOG      = 1 << 15, // (Since: 0.10.2)
+  VIR_CONNECT_LIST_STORAGE_POOLS_GLUSTER       = 1 << 16, // (Since: 1.2.1)
+  VIR_CONNECT_LIST_STORAGE_POOLS_ZFS           = 1 << 17, // (Since: 1.2.8)
+  VIR_CONNECT_LIST_STORAGE_POOLS_VSTORAGE      = 1 << 18, // (Since: 3.1.0)
+  VIR_CONNECT_LIST_STORAGE_POOLS_ISCSI_DIRECT  = 1 << 19  // (Since: 5.6.0)
+}
+
 DomainInfo :: struct {
   state:     DomainState,  // the running state, one of virDomainState
   maxMem:    c.ulong,      // unsigned long maxMem
@@ -94,6 +122,13 @@ DomainFSInfo :: struct {
   fstype:     cstring,
   ndevAlias:  c.size_t,
   devAlias:   [^]cstring,
+}
+
+StoragePoolInfo :: struct {
+  state:      c.int,          // StoragePoolState flags
+  capacity:   c.ulonglong,    // Logical size bytes
+  allocation: c.ulonglong,    // Current allocation bytes
+  available:  c.ulonglong,    // Remaining free space bytes
 }
 
 // --------------------------------------------------------
@@ -141,6 +176,12 @@ foreign vir {
 
   @(link_name="virDomainGetUUIDString")
   _DomainGetUUIDString :: proc(domain: ^Domain, uuid: [^]u8) -> c.int ---
+
+  @(link_name="virConnectListAllStoragePools")
+  ConnectListAllStoragePools :: proc(conn: ^Connect, pools: ^[^]^StoragePool, flags: c.uint=0) -> c.int ---
+
+  @(link_name="virStoragePoolGetName")
+  _StoragePoolGetName :: proc(pool: ^StoragePool) -> cstring ---
 
 }
 

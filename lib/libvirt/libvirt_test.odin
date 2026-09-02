@@ -7,7 +7,7 @@ import "core:encoding/xml"
 
 import vir "project:libvirt"
 
-URL :: "dwt"
+URL :: "smol"
 
 // ---------------------------------------------------------------------
 
@@ -36,3 +36,10 @@ test_domain_get_state :: proc(t: ^testing.T) {
   _ = vir.DomainGetState(domain, &state, reason=&reason)
   log.info(state, reason)
 }
+
+@(test)
+test_pools_list :: proc(t: ^testing.T) {
+  di := vir.DomainGetDiskInfo(domain)
+  log.info(di)
+}
+
