@@ -70,14 +70,24 @@ main :: proc() {
 
   conn := vir.ConnectOpen(URL)
 
+  /*
   pools: [^]^vir.StoragePool
+  pinfo: vir.StoragePoolInfo
+
   count := vir.ConnectListAllStoragePools(conn, &pools)
   fmt.printf("%p => pools[%d]\n", pools, count)
   for i in 0..<count {
     fmt.printf("%s\n", string(vir._StoragePoolGetName(pools[i])))
+    _ = vir.StoragePoolGetInfo(pools[i], &pinfo)
+    active := vir.StoragePoolIsActive(pools[i])
+    persistent := vir.StoragePoolIsPersistent(pools[i])
+    fmt.printf("%v %d %d\n", pinfo, active, persistent)
   }
-
+*/
   domains := vir.list(conn)
   tab := create_domain_table(domains)
   render_table(tab, .Lines)
+
+  pools := vir.pool_list(conn)
+  fmt.printf("%v\n", pools)
 }

@@ -183,6 +183,15 @@ foreign vir {
   @(link_name="virStoragePoolGetName")
   _StoragePoolGetName :: proc(pool: ^StoragePool) -> cstring ---
 
+  @(link_name="virStoragePoolGetInfo")
+  StoragePoolGetInfo :: proc(pool: ^StoragePool, info: ^StoragePoolInfo) -> c.int ---
+
+  @(link_name="virStoragePoolIsActive")
+  StoragePoolIsActive :: proc(pool: ^StoragePool) -> c.int ---
+
+  @(link_name="virStoragePoolIsPersistent")
+  StoragePoolIsPersistent :: proc(pool: ^StoragePool) -> c.int ---
+
 }
 
 DomainGetUUIDString :: proc(domain: ^Domain) -> string {
@@ -196,6 +205,10 @@ DomainGetUUIDString :: proc(domain: ^Domain) -> string {
 
 DomainGetName :: proc(domain: ^Domain) -> string {
   return string(_DomainGetName(domain))
+}
+
+StoragePoolGetName :: proc(pool: ^StoragePool) -> string {
+  return string(_StoragePoolGetName(pool))
 }
 
 DomainGetXMLDesc :: proc(domain: ^Domain) -> string {
@@ -212,8 +225,19 @@ DomainDetails :: struct {
   name: string
 }
 
+StoragePoolDetails :: struct {
+  using info: StoragePoolInfo,
+  pool: ^StoragePool,
+  name:       string,
+  active:     c.int,
+  persistent: c.int
+}
+
+// --------------------------------------------------------
+
 domain_get_details :: proc(domain: ^Domain) -> DomainDetails {
   d: DomainDetails
+
   _        = DomainGetInfo(domain, &d.info)
   d.domain = domain
   d.id     = DomainGetID(domain)
@@ -229,6 +253,28 @@ list :: proc(conn: ^Connect) -> []DomainDetails {
   count := ConnectListAllDomains(conn, &domains)
   for i in 0..<count {
     append(&res, domain_get_details(domains[i]))
+  }
+  return res[:]
+}
+
+pool_get_details :: proc(pool: ^StoragePool) -> StoragePoolDetails {
+  p: StoragePoolDetails
+
+  _ = StoragePoolGetInfo(pool, &p.info)
+  p.pool       = pool
+  p.name       = StoragePoolGetName(pool)
+  p.active     = StoragePoolIsActive(pool)
+  p.persistent = StoragePoolIsPersistent(pool)
+  return p
+}
+
+pool_list :: proc(conn: ^Connect) -> []StoragePoolDetails {
+  pools: [^]^StoragePool
+  res: [dynamic]StoragePoolDetails
+
+  count := ConnectListAllStoragePools(conn, &pools)
+  for i in 0..<count {
+    append(&res, pool_get_details(pools[i]))
   }
   return res[:]
 }
