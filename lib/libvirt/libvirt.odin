@@ -133,6 +133,12 @@ StoragePoolInfo :: struct {
   available:  c.ulonglong,    // Remaining free space bytes
 }
 
+StorageVolInfo :: struct {
+  type:       c.int,          // StorageVolType flags
+  capacity:   c.ulonglong,    // Logical size bytes
+  allocation: c.ulonglong,    // Current allocation bytes
+}
+
 // --------------------------------------------------------
 
 foreign vir {
@@ -208,6 +214,18 @@ foreign vir {
 
   @(link_name="virStorageVolLookupByName")
   StorageVolLookupByName :: proc(pool: ^StoragePool, name: cstring) -> ^StorageVol ---
+  
+  @(link_name="virStorageVolGetKey")
+  _StorageVolGetKey :: proc(vol: ^StorageVol) -> cstring ---
+
+  @(link_name="virStorageVolGetName")
+  _StorageVolGetName :: proc(vol: ^StorageVol) -> cstring ---
+
+  @(link_name="virStorageVolGetPath")
+  _StorageVolGetPath :: proc(vol: ^StorageVol) -> cstring ---
+
+  @(link_name="virStoragePoolListAllVolumes")
+  StoragePoolListAllVolumes :: proc(pool: ^StoragePool, vols: ^[^]^StorageVol, flags: c.uint=0) -> c.int ---
 }
 
 DomainGetUUIDString :: proc(domain: ^Domain) -> string {
@@ -231,6 +249,18 @@ StoragePoolGetName :: proc(pool: ^StoragePool) -> string {
   return string(_StoragePoolGetName(pool))
 }
 
+StorageVolGetName :: proc(vol: ^StorageVol) -> string {
+  return string(_StorageVolGetName(vol))
+}
+
+StorageVolGetPath :: proc(vol: ^StorageVol) -> string {
+  return string(_StorageVolGetPath(vol))
+}
+
+StorageVolGetKey :: proc(vol: ^StorageVol) -> string {
+  return string(_StorageVolGetKey(vol))
+}
+
 // --------------------------------------------------------
 
 DomainDetails :: struct {
@@ -247,6 +277,14 @@ StoragePoolDetails :: struct {
   name:       string,
   active:     c.int,
   persistent: c.int
+}
+
+StorageVolDetails :: struct {
+  // using info: StorageVolInfo,
+  vol:  ^StorageVol,
+  key:  string,
+  name: string,
+  path: string
 }
 
 // --------------------------------------------------------
@@ -291,6 +329,23 @@ pool_list :: proc(conn: ^Connect) -> []StoragePoolDetails {
   count := ConnectListAllStoragePools(conn, &pools)
   for i in 0..<count {
     append(&res, pool_get_details(pools[i]))
+  }
+  return res[:]
+}
+
+vol_list :: proc(pool: ^StoragePool) -> []StorageVolDetails {
+  vols: [^]^StorageVol
+  res: [dynamic]StorageVolDetails
+
+  count := StoragePoolListAllVolumes(pool, &vols)
+  for i in 0..<count {
+    key  := StorageVolGetKey(vols[i])
+    name := StorageVolGetName(vols[i])
+    path := StorageVolGetPath(vols[i])
+    fmt.println("key =",key)
+    fmt.println("name =", name)
+    fmt.println("path =", path)
+    // append(&res, pool_get_details(pools[i]))
   }
   return res[:]
 }

@@ -15,22 +15,15 @@ URL :: "smol"
 // -- main ------------------------------------------------------
 
 vm :: proc(domain: ^vir.Domain) {
-  dminfo: vir.DomainInfo
   fsinfo: [^]^vir.DomainFSInfo
 
+  details := vir.domain_get_details(domain)
+  
   name := vir.DomainGetName(domain)
-  _ = vir.DomainGetInfo(domain, &dminfo)
-  fmt.printf("\n%p => %s\n%v\n", domain, name, dminfo)
+  fmt.printf("\n%s\n", details.name)
   di := vir.DomainGetDiskInfo(domain)
   for d in di {
     fmt.println(d)
-  }
-  n := vir.DomainGetFSInfo(domain, &fsinfo)
-  for j in 0..<n {
-    fmt.printf("%v\n", fsinfo[j]^)
-    for k in 0..<fsinfo[j].ndevAlias {
-      fmt.printf("  alias = %s\n", fsinfo[j].devAlias[k])
-    }
   }
 }
 
@@ -74,6 +67,11 @@ main :: proc() {
   tab := create_domain_table(domains)
   render_table(tab, .Lines)
 
+  vm(domains[0].domain)
+
   pools := vir.pool_list(conn)
-  fmt.printf("%v\n", pools)
+
+  for pool in pools {
+    fmt.printf("%v\n", vir.vol_list(pool.pool))
+  }
 }
