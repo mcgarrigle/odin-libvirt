@@ -180,6 +180,9 @@ foreign vir {
   @(link_name="virConnectListAllStoragePools")
   ConnectListAllStoragePools :: proc(conn: ^Connect, pools: ^[^]^StoragePool, flags: c.uint=0) -> c.int ---
 
+  @(link_name="virStoragePoolFree")
+  StoragePoolFree :: proc(pool: ^StoragePool) -> c.int ---
+
   @(link_name="virStoragePoolGetName")
   _StoragePoolGetName :: proc(pool: ^StoragePool) -> cstring ---
 
@@ -191,7 +194,6 @@ foreign vir {
 
   @(link_name="virStoragePoolIsPersistent")
   StoragePoolIsPersistent :: proc(pool: ^StoragePool) -> c.int ---
-
 }
 
 DomainGetUUIDString :: proc(domain: ^Domain) -> string {

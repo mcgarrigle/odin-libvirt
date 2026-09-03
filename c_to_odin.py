@@ -1,0 +1,369 @@
+#!/usr/bin/env python3
+
+import re
+import sys
+
+
+# C -> Odin type mappings.
+TYPE_MAP = {
+    "void": "void",
+    "char": "c.char",
+    "signed char": "i8",
+    "unsigned char": "u8",
+    "short": "c.short",
+    "short int": "c.short",
+    "signed short": "c.short",
+    "signed short int": "c.short",
+    "unsigned short": "c.ushort",
+    "unsigned short int": "c.ushort",
+    "int": "c.int",
+    "signed": "c.int",
+    "signed int": "c.int",
+    "unsigned": "c.uint",
+    "unsigned int": "c.uint",
+    "long": "c.long",
+    "long int": "c.long",
+    "signed long": "c.long",
+    "signed long int": "c.long",
+    "unsigned long": "c.ulong",
+    "unsigned long int": "c.ulong",
+    "long long": "c.long_long",
+    "long long int": "c.long_long",
+    "signed long long": "c.long_long",
+    "signed long long int": "c.long_long",
+    "unsigned long long": "c.ulong_long",
+    "unsigned long long int": "c.ulong_long",
+    "float": "f32",
+    "double": "f64",
+    "long double": "f64",
+    "size_t": "c.size_t",
+    "ssize_t": "c.ssize_t",
+    "ptrdiff_t": "c.ptrdiff_t",
+    "intptr_t": "c.intptr_t",
+    "uintptr_t": "c.uintptr_t",
+    "int8_t": "i8",
+    "uint8_t": "u8",
+    "int16_t": "i16",
+    "uint16_t": "u16",
+    "int32_t": "i32",
+    "uint32_t": "u32",
+    "int64_t": "i64",
+    "uint64_t": "u64",
+    "bool": "bool",
+    "_Bool": "bool",
+}
+
+
+QUALIFIERS = {
+    "const",
+    "volatile",
+    "restrict",
+    "static",
+    "extern",
+    "register",
+    "inline",
+}
+
+
+def normalize_type(type_string):
+    """Normalize whitespace and remove C qualifiers."""
+    type_string = type_string.strip()
+
+    # Normalize pointer spacing.
+    type_string = re.sub(r"\s*\*\s*", " *", type_string)
+
+    words = type_string.split()
+    words = [w for w in words if w not in QUALIFIERS]
+
+    return " ".join(words)
+
+
+def c_type_to_odin(type_string):
+    """
+    Convert a C type to an Odin type.
+
+    Examples:
+        int              -> c.int
+        const char *     -> ^c.char
+        void *           -> rawptr
+        int **           -> ^^c.int
+    """
+    type_string = normalize_type(type_string)
+
+    # Count pointer levels.
+    pointer_level = type_string.count("*")
+    base = type_string.replace("*", "").strip()
+
+    # Handle C struct/enum/union types.
+    if base.startswith("struct "):
+        base = base[len("struct "):]
+        odin_base = base
+
+    elif base.startswith("enum "):
+        base = base[len("enum "):]
+        odin_base = base
+
+    elif base.startswith("union "):
+        base = base[len("union "):]
+        odin_base = base
+
+    else:
+        odin_base = TYPE_MAP.get(base, base)
+
+    # void* is conventionally represented as rawptr in Odin.
+    if odin_base == "void" and pointer_level > 0:
+        return "rawptr"
+
+    # Odin pointers use ^.
+    return "^" * pointer_level + odin_base
+
+
+def split_arguments(arguments):
+    """
+    Split a C argument list while respecting parentheses.
+
+    This handles things like:
+        int a, const char *b
+        void (*callback)(int)
+    """
+    result = []
+    current = []
+    depth = 0
+
+    for char in arguments:
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+
+        if char == "," and depth == 0:
+            result.append("".join(current).strip())
+            current = []
+        else:
+            current.append(char)
+
+    if current:
+        result.append("".join(current).strip())
+
+    return result
+
+
+def parse_argument(argument, index):
+    """Parse one C function argument."""
+    argument = argument.strip()
+
+    if not argument or argument == "void":
+        return None
+
+    # Function pointer:
+    #
+    #   void (*callback)(int)
+    #
+    # This is more complicated than ordinary arguments. For now we
+    # preserve it as rawptr, which is safe for an automatically
+    # generated binding.
+    if "(*" in argument:
+        match = re.search(r"\(\s*\*\s*(\w+)\s*\)", argument)
+
+        if match:
+            name = match.group(1)
+        else:
+            name = f"arg{index}"
+
+        return f"{name}: rawptr"
+
+    # Array arguments:
+    #
+    #   const char name[]
+    #
+    # In a C function parameter list these decay to pointers.
+    argument = re.sub(r"\[[^\]]*\]", " *", argument)
+
+    # Find the identifier at the end of the declaration.
+    #
+    # Examples:
+    #   const char *name
+    #   int flags
+    #   unsigned long value
+    match = re.search(r"([A-Za-z_]\w*)\s*$", argument)
+
+    if match:
+        name = match.group(1)
+        type_part = argument[:match.start()].strip()
+    else:
+        # Unnamed parameter:
+        #
+        #   int
+        #   const char *
+        name = f"arg{index}"
+        type_part = argument
+
+    # A parameter can be written as:
+    #
+    #   char* name
+    #
+    # or:
+    #
+    #   char *name
+    #
+    odin_type = c_type_to_odin(type_part)
+
+    return f"{name}: {odin_type}"
+
+def parse_function(declaration):
+    """
+    Convert a C function declaration into an Odin procedure declaration.
+
+    Example:
+        int foo(const char *name, unsigned int flags);
+
+    Becomes:
+        @(link_name="foo")
+        foo :: proc(name: ^c.char, flags: c.uint) -> c.int
+    """
+    # Remove comments.
+    declaration = re.sub(r"/\*.*?\*/", "", declaration, flags=re.S)
+    declaration = re.sub(r"//.*", "", declaration)
+
+    declaration = declaration.strip()
+
+    # Remove trailing semicolon.
+    declaration = declaration.rstrip(";").strip()
+
+    # Remove common calling-convention attributes.
+    declaration = re.sub(
+        r"\b(__cdecl|__stdcall|__fastcall|WINAPI|APIENTRY)\b",
+        "",
+        declaration,
+    )
+
+    # Match:
+    #
+    #   return_type function_name(arguments)
+    #
+    match = re.match(
+        r"^(.*?)\s+([A-Za-z_]\w*)\s*\((.*)\)$",
+        declaration,
+        flags=re.S,
+    )
+
+    if not match:
+        raise ValueError(
+            "Could not parse function declaration:\n"
+            f"  {declaration}"
+        )
+
+    return_type = match.group(1).strip()
+    function_name = match.group(2)
+    arguments = match.group(3).strip()
+
+    odin_return_type = c_type_to_odin(return_type)
+
+    params = []
+
+    if arguments and arguments != "void":
+        for index, argument in enumerate(split_arguments(arguments)):
+            parameter = parse_argument(argument, index)
+
+            if parameter:
+                params.append(parameter)
+
+    result = []
+
+    # Preserve the exact C symbol name.
+    result.append(f'@(link_name="{function_name}")')
+
+    result.append(
+        f"{function_name} :: proc("
+        + ", ".join(params)
+        + ")"
+        + (
+            f" -> {odin_return_type}"
+            if odin_return_type != "void"
+            else ""
+        )
+        + " ---"
+    )
+
+    return "\n".join(result)
+
+
+def parse_function_old(declaration):
+    """
+    Convert a C function declaration into an Odin procedure declaration.
+    """
+    # Remove comments.
+    declaration = re.sub(r"/\*.*?\*/", "", declaration, flags=re.S)
+    declaration = re.sub(r"//.*", "", declaration)
+
+    declaration = declaration.strip()
+
+    # Remove trailing semicolon.
+    declaration = declaration.rstrip(";").strip()
+
+    # Remove common attributes.
+    declaration = re.sub(
+        r"\b(__cdecl|__stdcall|__fastcall|WINAPI|APIENTRY)\b",
+        "",
+        declaration,
+    )
+
+    # Match:
+    #
+    #   return_type function_name(arguments)
+    #
+    match = re.match(
+        r"^(.*?)\s+([A-Za-z_]\w*)\s*\((.*)\)$",
+        declaration,
+        flags=re.S,
+    )
+
+    if not match:
+        raise ValueError(
+            "Could not parse function declaration:\n"
+            f"  {declaration}"
+        )
+
+    return_type = match.group(1).strip()
+    function_name = match.group(2)
+    arguments = match.group(3).strip()
+
+    odin_return_type = c_type_to_odin(return_type)
+
+    params = []
+
+    if arguments and arguments != "void":
+        for index, argument in enumerate(split_arguments(arguments)):
+            parameter = parse_argument(argument, index)
+
+            if parameter:
+                params.append(parameter)
+
+    result = f"{function_name} :: proc"
+
+    result += "("
+    result += ", ".join(params)
+    result += ")"
+
+    if odin_return_type != "void":
+        result += f" -> {odin_return_type}"
+
+    return result
+
+
+def main():
+    if len(sys.argv) > 1:
+        declaration = " ".join(sys.argv[1:])
+    else:
+        declaration = sys.stdin.read()
+
+    try:
+        print(parse_function(declaration))
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
+
