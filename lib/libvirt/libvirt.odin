@@ -17,6 +17,8 @@ Domain :: struct  {}
 
 StoragePool :: struct  {}
 
+StorageVol :: struct  {}
+
 VIR_UUID_BUFLEN :: 16
 VIR_UUID_STRING_LEN :: 36
 VIR_UUID_STRING_BUFLEN :: 36+1
@@ -194,6 +196,18 @@ foreign vir {
 
   @(link_name="virStoragePoolIsPersistent")
   StoragePoolIsPersistent :: proc(pool: ^StoragePool) -> c.int ---
+
+  @(link_name="virStoragePoolLookupByName")
+  StoragePoolLookupByName :: proc(conn: ^Connect, name: cstring) -> ^StoragePool ---
+
+  @(link_name="virStoragePoolLookupByTargetPath")
+  StoragePoolLookupByTargetPath :: proc(conn: ^Connect, name: cstring) -> ^StoragePool ---
+
+  @(link_name="virStoragePoolLookupByUUIDString")
+  StoragePoolLookupByUUIDString :: proc(conn: ^Connect, name: cstring) -> ^StoragePool ---
+
+  @(link_name="virStorageVolLookupByName")
+  StorageVolLookupByName :: proc(pool: ^StoragePool, name: cstring) -> ^StorageVol ---
 }
 
 DomainGetUUIDString :: proc(domain: ^Domain) -> string {
@@ -209,12 +223,12 @@ DomainGetName :: proc(domain: ^Domain) -> string {
   return string(_DomainGetName(domain))
 }
 
-StoragePoolGetName :: proc(pool: ^StoragePool) -> string {
-  return string(_StoragePoolGetName(pool))
-}
-
 DomainGetXMLDesc :: proc(domain: ^Domain) -> string {
   return string(_DomainGetXMLDesc(domain))
+}
+
+StoragePoolGetName :: proc(pool: ^StoragePool) -> string {
+  return string(_StoragePoolGetName(pool))
 }
 
 // --------------------------------------------------------
