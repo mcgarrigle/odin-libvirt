@@ -42,7 +42,6 @@ create_domain_table :: proc(domains: []vir.DomainDetails) -> ^table.Table {
   sort.heap_sort_proc(domains, compare_domains)
 
   tbl := table.init(new(table.Table), context.allocator)
-  table.padding(tbl, 1, 1)
   table.header(tbl, "ID", "Name", "State")
   for domain in domains {
     table.row(tbl, id_to_string(domain.id), domain.name, domain.state)
@@ -70,8 +69,7 @@ main :: proc() {
   vm(domains[0].domain)
 
   pools := vir.pool_list(conn)
-
   for pool in pools {
-    fmt.printf("%v\n", vir.vol_list(pool.pool))
+    fmt.printf("\n%v\n", vir.vol_list(pool.pool))
   }
 }

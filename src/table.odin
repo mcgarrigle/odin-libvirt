@@ -55,6 +55,7 @@ write_stream_table :: proc(w: io.Writer, tbl: ^table.Table, width_proc: table.Wi
 }
 
 render_table :: proc(tbl: ^table.Table, format: Format = .Lines) {
+  table.padding(tbl, 1, 1)
   stdout := table.stdio_writer()
   switch format {
   case .ASCII: 

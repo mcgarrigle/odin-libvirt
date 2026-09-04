@@ -212,9 +212,18 @@ foreign vir {
   @(link_name="virStoragePoolLookupByUUIDString")
   StoragePoolLookupByUUIDString :: proc(conn: ^Connect, name: cstring) -> ^StoragePool ---
 
+  @(link_name="virStorageVolLookupByKey")
+  StorageVolLookupByKey :: proc(conn: ^Connect, key: cstring) -> ^StorageVol ---
+
+  @(link_name="virStorageVolLookupByPath")
+  StorageVolLookupByPath :: proc(conn: ^Connect, path: cstring) -> ^StorageVol ---
+
   @(link_name="virStorageVolLookupByName")
   StorageVolLookupByName :: proc(pool: ^StoragePool, name: cstring) -> ^StorageVol ---
   
+  @(link_name="virStorageVolGetInfo")
+  StorageVolGetInfo:: proc(vol: ^StorageVol, info: ^StorageVolInfo) -> c.int ---
+
   @(link_name="virStorageVolGetKey")
   _StorageVolGetKey :: proc(vol: ^StorageVol) -> cstring ---
 
@@ -280,7 +289,7 @@ StoragePoolDetails :: struct {
 }
 
 StorageVolDetails :: struct {
-  // using info: StorageVolInfo,
+  using info: StorageVolInfo,
   vol:  ^StorageVol,
   key:  string,
   name: string,
@@ -311,10 +320,12 @@ list :: proc(conn: ^Connect) -> []DomainDetails {
   return res[:]
 }
 
+// --------------------------------------------------------
+
 pool_get_details :: proc(pool: ^StoragePool) -> StoragePoolDetails {
   p: StoragePoolDetails
 
-  _ = StoragePoolGetInfo(pool, &p.info)
+  _            = StoragePoolGetInfo(pool, &p.info)
   p.pool       = pool
   p.name       = StoragePoolGetName(pool)
   p.active     = StoragePoolIsActive(pool)
@@ -333,22 +344,31 @@ pool_list :: proc(conn: ^Connect) -> []StoragePoolDetails {
   return res[:]
 }
 
+// --------------------------------------------------------
+
+vol_get_details :: proc(vol: ^StorageVol) -> StorageVolDetails {
+  v: StorageVolDetails
+
+  _      = StorageVolGetInfo(vol, &v.info)
+  v.vol  = vol
+  v.key  = StorageVolGetKey(vol)
+  v.name = StorageVolGetName(vol)
+  v.path = StorageVolGetPath(vol)
+  return v
+}
+
 vol_list :: proc(pool: ^StoragePool) -> []StorageVolDetails {
   vols: [^]^StorageVol
   res: [dynamic]StorageVolDetails
 
   count := StoragePoolListAllVolumes(pool, &vols)
   for i in 0..<count {
-    key  := StorageVolGetKey(vols[i])
-    name := StorageVolGetName(vols[i])
-    path := StorageVolGetPath(vols[i])
-    fmt.println("key =",key)
-    fmt.println("name =", name)
-    fmt.println("path =", path)
-    // append(&res, pool_get_details(pools[i]))
+    append(&res, vol_get_details(vols[i]))
   }
   return res[:]
 }
+
+// --------------------------------------------------------
 
 DomainGetDiskInfo :: proc(domain: ^Domain) -> []DomainDiskInfo {
   res: [dynamic]DomainDiskInfo
