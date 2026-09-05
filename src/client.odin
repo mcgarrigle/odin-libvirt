@@ -10,16 +10,42 @@ import "core:text/table"
 
 import vir "project:libvirt"
 
-URL :: "smol"
+URL := "smol"
 
 // -- main ------------------------------------------------------
+
+ClusterNode :: struct {
+  name: string,
+  conn: ^vir.Connect
+}
+
+Cluster :: []ClusterNode
+
+cluster_init :: proc(config: string) -> Cluster {
+  nodes := strings.split(config, " ")
+  cluster := make(Cluster, len(nodes))
+  for node, i in nodes {
+    cluster[i].name = node
+    cluster[i].conn = vir.ConnectOpen(node)
+  }
+  return cluster[:]
+}
+
+cluster_list :: proc(cluster: Cluster) -> []vir.DomainDetails {
+  res: [dynamic]vir.DomainDetails
+
+  for node in cluster {
+    list := vir.list(node.conn)
+    append(&res, ..list)
+  }
+  return res[:]
+}
 
 vm :: proc(domain: ^vir.Domain) {
   fsinfo: [^]^vir.DomainFSInfo
 
   details := vir.domain_get_details(domain)
   
-  name := vir.DomainGetName(domain)
   fmt.printf("\n%s\n", details.name)
   di := vir.DomainGetDiskInfo(domain)
   for d in di {
@@ -72,4 +98,9 @@ main :: proc() {
   for pool in pools {
     fmt.printf("\n%v\n", vir.vol_list(pool.pool))
   }
+
+  cluster := cluster_init("dwt smol wee")
+  // fmt.println(cluster)
+  vms := cluster_list(cluster)
+  fmt.println(vms)
 }

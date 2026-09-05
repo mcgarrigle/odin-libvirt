@@ -144,7 +144,10 @@ StorageVolInfo :: struct {
 foreign vir {
 
   @(link_name="virConnectOpen")
-  ConnectOpen :: proc(name: cstring) -> ^Connect ---
+  _ConnectOpen :: proc(name: cstring) -> ^Connect ---
+
+  @(link_name="virConnectGetURI")
+  _ConnectGetURI :: proc(conn: ^Connect) -> cstring ---
 
   @(link_name="virDomainLookupByName")
   DomainLookupByName :: proc(conn: ^Connect, name: cstring) -> ^Domain ---
@@ -237,6 +240,15 @@ foreign vir {
   StoragePoolListAllVolumes :: proc(pool: ^StoragePool, vols: ^[^]^StorageVol, flags: c.uint=0) -> c.int ---
 }
 
+ConnectOpen :: proc(name: string) -> ^Connect {
+  arg := strings.clone_to_cstring(name)
+  return _ConnectOpen(arg)
+}
+
+ConnectGetURI:: proc(conn: ^Connect) -> string {
+  return string(_ConnectGetURI(conn))
+}
+
 DomainGetUUIDString :: proc(domain: ^Domain) -> string {
   id: [VIR_UUID_STRING_BUFLEN]u8
 
@@ -272,14 +284,6 @@ StorageVolGetKey :: proc(vol: ^StorageVol) -> string {
 
 // --------------------------------------------------------
 
-DomainDetails :: struct {
-  using info: DomainInfo,
-  domain: ^Domain,
-  id:   c.int,
-  uuid: string,
-  name: string
-}
-
 StoragePoolDetails :: struct {
   using info: StoragePoolInfo,
   pool: ^StoragePool,
@@ -298,6 +302,15 @@ StorageVolDetails :: struct {
 
 // --------------------------------------------------------
 
+DomainDetails :: struct {
+  using info: DomainInfo,
+  domain: ^Domain,
+  host: string,
+  id:   c.int,
+  uuid: string,
+  name: string
+}
+
 domain_get_details :: proc(domain: ^Domain) -> DomainDetails {
   d: DomainDetails
 
@@ -313,9 +326,12 @@ list :: proc(conn: ^Connect) -> []DomainDetails {
   domains: [^]^Domain
   res: [dynamic]DomainDetails
 
+  host := ConnectGetURI(conn)
   count := ConnectListAllDomains(conn, &domains)
   for i in 0..<count {
-    append(&res, domain_get_details(domains[i]))
+    dom := domain_get_details(domains[i])
+    dom.host = host
+    append(&res, dom)
   }
   return res[:]
 }

@@ -11,8 +11,13 @@ URL :: "smol"
 
 // ---------------------------------------------------------------------
 
-conn   := vir.ConnectOpen(URL)
-domain := vir.DomainLookupByName(conn, "node1")
+conn: ^Connect
+domain: ^Domain
+
+setup :: proc() {
+  conn   := vir.ConnectOpen("smol")
+  domain := vir.DomainLookupByName(conn, "node1")
+}
 
 @(test)
 test_domain_get_info :: proc(t: ^testing.T) {
@@ -42,4 +47,3 @@ test_pools_list :: proc(t: ^testing.T) {
   di := vir.DomainGetDiskInfo(domain)
   log.info(di)
 }
-
