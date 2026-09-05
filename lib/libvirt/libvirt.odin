@@ -284,24 +284,6 @@ StorageVolGetKey :: proc(vol: ^StorageVol) -> string {
 
 // --------------------------------------------------------
 
-StoragePoolDetails :: struct {
-  using info: StoragePoolInfo,
-  pool: ^StoragePool,
-  name:       string,
-  active:     c.int,
-  persistent: c.int
-}
-
-StorageVolDetails :: struct {
-  using info: StorageVolInfo,
-  vol:  ^StorageVol,
-  key:  string,
-  name: string,
-  path: string
-}
-
-// --------------------------------------------------------
-
 DomainDetails :: struct {
   using info: DomainInfo,
   domain: ^Domain,
@@ -322,11 +304,10 @@ domain_get_details :: proc(domain: ^Domain) -> DomainDetails {
   return d
 }
 
-list :: proc(conn: ^Connect) -> []DomainDetails {
+list :: proc(conn: ^Connect, host: string = "") -> []DomainDetails {
   domains: [^]^Domain
   res: [dynamic]DomainDetails
 
-  host := ConnectGetURI(conn)
   count := ConnectListAllDomains(conn, &domains)
   for i in 0..<count {
     dom := domain_get_details(domains[i])
@@ -337,6 +318,14 @@ list :: proc(conn: ^Connect) -> []DomainDetails {
 }
 
 // --------------------------------------------------------
+
+StoragePoolDetails :: struct {
+  using info: StoragePoolInfo,
+  pool: ^StoragePool,
+  name:       string,
+  active:     c.int,
+  persistent: c.int
+}
 
 pool_get_details :: proc(pool: ^StoragePool) -> StoragePoolDetails {
   p: StoragePoolDetails
@@ -361,6 +350,14 @@ pool_list :: proc(conn: ^Connect) -> []StoragePoolDetails {
 }
 
 // --------------------------------------------------------
+
+StorageVolDetails :: struct {
+  using info: StorageVolInfo,
+  vol:  ^StorageVol,
+  key:  string,
+  name: string,
+  path: string
+}
 
 vol_get_details :: proc(vol: ^StorageVol) -> StorageVolDetails {
   v: StorageVolDetails

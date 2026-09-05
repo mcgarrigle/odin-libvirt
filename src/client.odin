@@ -21,12 +21,11 @@ ClusterNode :: struct {
 
 Cluster :: []ClusterNode
 
-cluster_init :: proc(config: string) -> Cluster {
-  nodes := strings.split(config, " ")
-  cluster := make(Cluster, len(nodes))
-  for node, i in nodes {
-    cluster[i].name = node
-    cluster[i].conn = vir.ConnectOpen(node)
+cluster_init :: proc(names: []string) -> Cluster {
+  cluster := make(Cluster, len(names))
+  for name, i in names {
+    cluster[i].name = name
+    cluster[i].conn = vir.ConnectOpen(name)
   }
   return cluster[:]
 }
@@ -35,7 +34,7 @@ cluster_list :: proc(cluster: Cluster) -> []vir.DomainDetails {
   res: [dynamic]vir.DomainDetails
 
   for node in cluster {
-    list := vir.list(node.conn)
+    list := vir.list(node.conn, node.name)
     append(&res, ..list)
   }
   return res[:]
@@ -68,9 +67,9 @@ create_domain_table :: proc(domains: []vir.DomainDetails) -> ^table.Table {
   sort.heap_sort_proc(domains, compare_domains)
 
   tbl := table.init(new(table.Table), context.allocator)
-  table.header(tbl, "ID", "Name", "State")
+  table.header(tbl, "ID", "Name", "State", "Host")
   for domain in domains {
-    table.row(tbl, id_to_string(domain.id), domain.name, domain.state)
+    table.row(tbl, id_to_string(domain.id), domain.name, domain.state, domain.host)
   }
   return tbl
 }
@@ -88,19 +87,19 @@ main :: proc() {
 
   conn := vir.ConnectOpen(URL)
 
-  domains := vir.list(conn)
+  // vm(domains[0].domain)
+
+  // pools := vir.pool_list(conn)
+  // for pool in pools {
+  //   fmt.printf("\n%v\n", vir.vol_list(pool.pool))
+  // }
+
+  names := []string{"dwt", "smol", "wee"}
+  cluster := cluster_init(names)
+  // fmt.println(cluster)
+  domains := cluster_list(cluster)
+  // fmt.println(vms)
+  // domains := vir.list(conn)
   tab := create_domain_table(domains)
   render_table(tab, .Lines)
-
-  vm(domains[0].domain)
-
-  pools := vir.pool_list(conn)
-  for pool in pools {
-    fmt.printf("\n%v\n", vir.vol_list(pool.pool))
-  }
-
-  cluster := cluster_init("dwt smol wee")
-  // fmt.println(cluster)
-  vms := cluster_list(cluster)
-  fmt.println(vms)
 }
