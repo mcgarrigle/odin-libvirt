@@ -65,6 +65,7 @@ render_table :: proc(tbl: ^table.Table, format: Format = .Lines) {
   case .Simple:
     write_simple_table(stdout, tbl)
   case .None:
+    table.padding(tbl, 0, 0)
     write_stream_table(stdout, tbl)
   }
 }

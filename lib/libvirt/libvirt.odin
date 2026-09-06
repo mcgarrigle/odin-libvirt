@@ -105,8 +105,8 @@ ConnectListAllStoragePoolsFlags :: enum u32 {
 
 DomainInfo :: struct {
   state:     DomainState,  // the running state, one of virDomainState
-  maxMem:    c.ulong,      // unsigned long maxMem
-  memory:    c.ulong,      // the maximum memory in KBytes allowed
+  maxMem:    c.ulong,      // the maximum memory in KBytes allowed
+  memory:    c.ulong,      // the memory in KBytes configured
   nrVirtCpu: c.ushort,     // the number of virtual CPUs for the domain
   cpuTime:   c.ulonglong   // the CPU time used in nanoseconds
 }
@@ -188,6 +188,12 @@ foreign vir {
   @(link_name="virDomainGetUUIDString")
   _DomainGetUUIDString :: proc(domain: ^Domain, uuid: [^]u8) -> c.int ---
 
+  @(link_name="virDomainGetAutostart")
+  DomainGetAutostart :: proc(domain: ^Domain, autostart: ^c.int) -> c.int ---
+
+  @(link_name="virDomainGetAutostartOnce")
+  DomainGetAutostartOnce :: proc(domain: ^Domain, autostart: ^c.int) -> c.int ---
+
   @(link_name="virConnectListAllStoragePools")
   ConnectListAllStoragePools :: proc(conn: ^Connect, pools: ^[^]^StoragePool, flags: c.uint=0) -> c.int ---
 
@@ -245,7 +251,7 @@ ConnectOpen :: proc(name: string) -> ^Connect {
   return _ConnectOpen(arg)
 }
 
-ConnectGetURI:: proc(conn: ^Connect) -> string {
+ConnectGetURI :: proc(conn: ^Connect) -> string {
   return string(_ConnectGetURI(conn))
 }
 
@@ -290,7 +296,9 @@ DomainDetails :: struct {
   host: string,
   id:   c.int,
   uuid: string,
-  name: string
+  name: string,
+  autostart: i32,
+  autostart_once: i32
 }
 
 domain_get_details :: proc(domain: ^Domain) -> DomainDetails {
@@ -301,6 +309,8 @@ domain_get_details :: proc(domain: ^Domain) -> DomainDetails {
   d.id     = DomainGetID(domain)
   d.uuid   = DomainGetUUIDString(domain)
   d.name   = DomainGetName(domain)
+  _ = DomainGetAutostart(domain, &d.autostart)
+  _ = DomainGetAutostartOnce(domain, &d.autostart_once)
   return d
 }
 
