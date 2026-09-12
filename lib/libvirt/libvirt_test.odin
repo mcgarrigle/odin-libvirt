@@ -11,16 +11,14 @@ URL :: "smol"
 
 // ---------------------------------------------------------------------
 
-conn: ^Connect
-domain: ^Domain
-
-setup :: proc() {
+setup :: proc() -> ^Domain {
   conn   := vir.ConnectOpen("smol")
-  domain := vir.DomainLookupByName(conn, "node1")
+  return vir.DomainLookupByName(conn, "node1")
 }
 
 @(test)
 test_domain_get_info :: proc(t: ^testing.T) {
+  domain := setup()
   di: DomainInfo
 
   vir.DomainGetInfo(domain, &di)
@@ -29,12 +27,14 @@ test_domain_get_info :: proc(t: ^testing.T) {
 
 @(test)
 test_domain_get_disk_info :: proc(t: ^testing.T) {
+  domain := setup()
   di := vir.DomainGetDiskInfo(domain)
   log.info(di)
 }
 
 @(test)
 test_domain_get_state :: proc(t: ^testing.T) {
+  domain := setup()
   state: DomainState
   reason: i32
 
@@ -44,6 +44,7 @@ test_domain_get_state :: proc(t: ^testing.T) {
 
 @(test)
 test_pools_list :: proc(t: ^testing.T) {
+  domain := setup()
   di := vir.DomainGetDiskInfo(domain)
   log.info(di)
 }

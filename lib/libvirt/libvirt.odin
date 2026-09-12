@@ -141,6 +141,7 @@ StorageVolInfo :: struct {
 
 // --------------------------------------------------------
 
+@(link_prefix = "vir")
 foreign vir {
 
   @(link_name="virConnectOpen")
@@ -149,10 +150,8 @@ foreign vir {
   @(link_name="virConnectGetURI")
   _ConnectGetURI :: proc(conn: ^Connect) -> cstring ---
 
-  @(link_name="virDomainLookupByName")
   DomainLookupByName :: proc(conn: ^Connect, name: cstring) -> ^Domain ---
 
-  @(link_name="virConnectListAllDomains")
   ConnectListAllDomains :: proc(conn: ^Connect, domains: ^[^]^Domain, flags: ConnectListAllDomainsFlags=.All) -> c.int ---
 
   @(link_name="virDomainGetName")
@@ -161,76 +160,56 @@ foreign vir {
   @(link_name="virDomainGetXMLDesc")
   _DomainGetXMLDesc :: proc(domain: ^Domain, flags: c.uint=0) -> cstring ---
 
-  @(link_name="virDomainGetInfo")
   DomainGetInfo :: proc(domain: ^Domain, info: ^DomainInfo) -> c.int ---
 
-  @(link_name="virDomainGetFSInfo")
   DomainGetFSInfo :: proc(domain: ^Domain, info: ^[^]^DomainFSInfo, flags: c.uint=0) -> c.int ---
 
-  @(link_name="virDomainGetState")
   DomainGetState :: proc(domain: ^Domain, state: ^DomainState, reason: ^c.int, flags: c.uint=0) -> c.int ---
 
-  @(link_name="virDomainCreateWithFlags")
   DomainCreateWithFlags :: proc(domain: ^Domain, flags: DomainCreateFlags=.None) -> c.int ---
 
-  @(link_name="virDomainDestroy")
   DomainDestroy :: proc(domain: Domain) -> c.int ---
 
-  @(link_name="virDomainDestroyFlags")
   DomainDestroyFlags :: proc(domain: Domain, flags: DomainDestroyFlagValues) -> c.int ---
 
-  @(link_name="virDomainGetID")
   DomainGetID :: proc(domain: ^Domain) -> c.int ---
 
-  @(link_name="virDomainGetUUID")
   DomainGetUUID :: proc(domain: ^Domain) -> [VIR_UUID_BUFLEN]u8 ---
 
   @(link_name="virDomainGetUUIDString")
   _DomainGetUUIDString :: proc(domain: ^Domain, uuid: [^]u8) -> c.int ---
 
-  @(link_name="virDomainGetAutostart")
   DomainGetAutostart :: proc(domain: ^Domain, autostart: ^c.int) -> c.int ---
 
-  @(link_name="virDomainGetAutostartOnce")
   DomainGetAutostartOnce :: proc(domain: ^Domain, autostart: ^c.int) -> c.int ---
 
-  @(link_name="virConnectListAllStoragePools")
   ConnectListAllStoragePools :: proc(conn: ^Connect, pools: ^[^]^StoragePool, flags: c.uint=0) -> c.int ---
 
-  @(link_name="virStoragePoolFree")
   StoragePoolFree :: proc(pool: ^StoragePool) -> c.int ---
 
   @(link_name="virStoragePoolGetName")
   _StoragePoolGetName :: proc(pool: ^StoragePool) -> cstring ---
 
-  @(link_name="virStoragePoolGetInfo")
   StoragePoolGetInfo :: proc(pool: ^StoragePool, info: ^StoragePoolInfo) -> c.int ---
 
-  @(link_name="virStoragePoolIsActive")
   StoragePoolIsActive :: proc(pool: ^StoragePool) -> c.int ---
 
-  @(link_name="virStoragePoolIsPersistent")
   StoragePoolIsPersistent :: proc(pool: ^StoragePool) -> c.int ---
 
-  @(link_name="virStoragePoolLookupByName")
   StoragePoolLookupByName :: proc(conn: ^Connect, name: cstring) -> ^StoragePool ---
 
-  @(link_name="virStoragePoolLookupByTargetPath")
+  StoragePoolListAllVolumes :: proc(pool: ^StoragePool, vols: ^[^]^StorageVol, flags: c.uint=0) -> c.int ---
+
   StoragePoolLookupByTargetPath :: proc(conn: ^Connect, name: cstring) -> ^StoragePool ---
 
-  @(link_name="virStoragePoolLookupByUUIDString")
   StoragePoolLookupByUUIDString :: proc(conn: ^Connect, name: cstring) -> ^StoragePool ---
 
-  @(link_name="virStorageVolLookupByKey")
   StorageVolLookupByKey :: proc(conn: ^Connect, key: cstring) -> ^StorageVol ---
 
-  @(link_name="virStorageVolLookupByPath")
   StorageVolLookupByPath :: proc(conn: ^Connect, path: cstring) -> ^StorageVol ---
 
-  @(link_name="virStorageVolLookupByName")
   StorageVolLookupByName :: proc(pool: ^StoragePool, name: cstring) -> ^StorageVol ---
   
-  @(link_name="virStorageVolGetInfo")
   StorageVolGetInfo:: proc(vol: ^StorageVol, info: ^StorageVolInfo) -> c.int ---
 
   @(link_name="virStorageVolGetKey")
@@ -241,9 +220,6 @@ foreign vir {
 
   @(link_name="virStorageVolGetPath")
   _StorageVolGetPath :: proc(vol: ^StorageVol) -> cstring ---
-
-  @(link_name="virStoragePoolListAllVolumes")
-  StoragePoolListAllVolumes :: proc(pool: ^StoragePool, vols: ^[^]^StorageVol, flags: c.uint=0) -> c.int ---
 }
 
 ConnectOpen :: proc(name: string) -> ^Connect {
