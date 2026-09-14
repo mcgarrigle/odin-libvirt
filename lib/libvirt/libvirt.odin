@@ -77,6 +77,17 @@ DomainDestroyFlagValues :: enum u32 {
   RemoveLogs = 1 << 1,  // remove VM logs on destroy (Since: 8.3.0)
 }
 
+DomainUndefineFlagValues :: enum u32 {
+  Default             = 0,   // Default behavior
+  ManagedSave         = 1,   // Also remove any managed save
+  SnapshotsMetadata   = 2,   // If last use of domain, then also remove any snapshot metadata
+  UndefineNVRAM       = 4,   // Also remove any nvram file
+  KeepNVRAM           = 8,   // Keep nvram file
+  CheckpointsMetadata = 16,  // If last use of domain, then also remove any checkpoint metadata
+  UndefineTPM         = 32,  // Also remove any TPM state
+  KeepTPM             = 64   // Keep TPM state Future undefine control flags should come here.
+}
+
 ConnectListAllStoragePoolsFlags :: enum u32 {
   VIR_CONNECT_LIST_STORAGE_POOLS_INACTIVE      = 1 << 0, // (Since: 0.10.2)
   VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE        = 1 << 1, // (Since: 0.10.2)
@@ -170,7 +181,9 @@ foreign vir {
 
   DomainDestroy :: proc(domain: Domain) -> c.int ---
 
-  DomainDestroyFlags :: proc(domain: Domain, flags: DomainDestroyFlagValues) -> c.int ---
+  DomainDestroyFlags :: proc(domain: Domain, flags: DomainDestroyFlagValues=.Default) -> c.int ---
+
+  DomainUndefineFlags :: proc(domain: ^Domain , flags: DomainUndefineFlagValues=.Default) -> c.int ---
 
   DomainGetID :: proc(domain: ^Domain) -> c.int ---
 
