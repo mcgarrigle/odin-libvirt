@@ -173,15 +173,17 @@ foreign vir {
 
   DomainGetInfo :: proc(domain: ^Domain, info: ^DomainInfo) -> c.int ---
 
+  DomainGetConnect :: proc(vol: ^Domain) -> ^Connect ---
+
   DomainGetFSInfo :: proc(domain: ^Domain, info: ^[^]^DomainFSInfo, flags: c.uint=0) -> c.int ---
 
   DomainGetState :: proc(domain: ^Domain, state: ^DomainState, reason: ^c.int, flags: c.uint=0) -> c.int ---
 
   DomainCreateWithFlags :: proc(domain: ^Domain, flags: DomainCreateFlags=.None) -> c.int ---
 
-  DomainDestroy :: proc(domain: Domain) -> c.int ---
+  DomainDestroy :: proc(domain: ^Domain) -> c.int ---
 
-  DomainDestroyFlags :: proc(domain: Domain, flags: DomainDestroyFlagValues=.Default) -> c.int ---
+  DomainDestroyFlags :: proc(domain: ^Domain, flags: DomainDestroyFlagValues=.Default) -> c.int ---
 
   DomainUndefineFlags :: proc(domain: ^Domain , flags: DomainUndefineFlagValues=.Default) -> c.int ---
 
@@ -217,11 +219,18 @@ foreign vir {
 
   StoragePoolLookupByUUIDString :: proc(conn: ^Connect, name: cstring) -> ^StoragePool ---
 
-  StorageVolLookupByKey :: proc(conn: ^Connect, key: cstring) -> ^StorageVol ---
+  StorageVolGetConnect :: proc(vol: ^StorageVol) -> ^Connect ---
 
-  StorageVolLookupByPath :: proc(conn: ^Connect, path: cstring) -> ^StorageVol ---
+  StorageVolDelete :: proc(vol: ^StorageVol, flags: c.int=0) -> c.int ---
 
-  StorageVolLookupByName :: proc(pool: ^StoragePool, name: cstring) -> ^StorageVol ---
+  @(link_name="virStorageVolLookupByKey")
+  _StorageVolLookupByKey :: proc(conn: ^Connect, key: cstring) -> ^StorageVol ---
+
+  @(link_name="virStorageVolLookupByPath")
+  _StorageVolLookupByPath :: proc(conn: ^Connect, path: cstring) -> ^StorageVol ---
+
+  @(link_name="virStorageVolLookupByName")
+  _StorageVolLookupByName :: proc(pool: ^StoragePool, name: cstring) -> ^StorageVol ---
   
   StorageVolGetInfo:: proc(vol: ^StorageVol, info: ^StorageVolInfo) -> c.int ---
 
@@ -236,8 +245,7 @@ foreign vir {
 }
 
 ConnectOpen :: proc(name: string) -> ^Connect {
-  arg := strings.clone_to_cstring(name)
-  return _ConnectOpen(arg)
+  return _ConnectOpen(strings.clone_to_cstring(name))
 }
 
 ConnectGetURI :: proc(conn: ^Connect) -> string {
@@ -263,6 +271,18 @@ DomainGetXMLDesc :: proc(domain: ^Domain) -> string {
 
 StoragePoolGetName :: proc(pool: ^StoragePool) -> string {
   return string(_StoragePoolGetName(pool))
+}
+
+StorageVolLookupByKey :: proc(conn: ^Connect, path: string) -> ^StorageVol {
+  return _StorageVolLookupByKey(conn, strings.clone_to_cstring(path))
+}
+
+StorageVolLookupByPath :: proc(conn: ^Connect, path: string) -> ^StorageVol {
+  return _StorageVolLookupByPath(conn, strings.clone_to_cstring(path))
+}
+
+StorageVolLookupByName :: proc(pool: ^StoragePool, path: string) -> ^StorageVol {
+  return _StorageVolLookupByName(pool, strings.clone_to_cstring(path))
 }
 
 StorageVolGetName :: proc(vol: ^StorageVol) -> string {
