@@ -19,6 +19,8 @@ StoragePool :: struct  {}
 
 StorageVol :: struct  {}
 
+Network :: struct  {}
+
 VIR_UUID_BUFLEN :: 16
 VIR_UUID_STRING_LEN :: 36
 VIR_UUID_STRING_BUFLEN :: 36+1

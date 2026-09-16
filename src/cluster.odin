@@ -1,5 +1,7 @@
 package main
 
+import "core:fnt"
+
 import vir "project:libvirt"
 
 // --------------------------------------------------------------
@@ -11,11 +13,18 @@ ClusterNode :: struct {
 
 Cluster :: []ClusterNode
 
+// --------------------------------------------------------------
+
+error_handler :: proc "cdecl" (data: rawptr, err: ^vir.Error) {
+  fmt.println("err")
+}
+
 cluster_init :: proc(names: []string) -> Cluster {
   cluster := make(Cluster, len(names))
   for name, i in names {
     cluster[i].name = name
     cluster[i].conn = vir.ConnectOpen(name)
+    vir.iConnSetErrorFunc(cluster[i].conn, nil, error_handler)
   }
   return cluster[:]
 }
