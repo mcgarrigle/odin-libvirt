@@ -26,15 +26,15 @@ VIR_UUID_STRING_LEN :: 36
 VIR_UUID_STRING_BUFLEN :: 36+1
 
 DomainState :: enum u32 {
-  NoState     = 0,  // (0x0) no state
-  Running     = 1,  // (0x1) the domain is running
-  Blocked     = 2,  // (0x2) the domain is blocked on resource
-  Paused      = 3,  // (0x3) the domain is paused by user
-  Shutdown    = 4,  // (0x4) the domain is being shut down
-  Shutoff     = 5,  // (0x5) the domain is shut off
-  Crashed     = 6,  // (0x6) the domain is crashed
-  PMSuspended = 7,  // (0x7) the domain is suspended by guest power management
-  Last        = 8   // (0x8) NB: this enum value will increase over time as new states are added to the libvirt API. It reflects the last state supported by this version of the libvirt API.
+  NoState     = 0,  // no state
+  Running     = 1,  // the domain is running
+  Blocked     = 2,  // the domain is blocked on resource
+  Paused      = 3,  // the domain is paused by user
+  Shutdown    = 4,  // the domain is being shut down
+  Shutoff     = 5,  // the domain is shut off
+  Crashed     = 6,  // the domain is crashed
+  PMSuspended = 7,  // the domain is suspended by guest power management
+  Last        = 8   // NB: this enum value will increase over time as new states are added to the libvirt API. It reflects the last state supported by this version of the libvirt API.
 }
 
 DomainCreateFlags :: enum u32 {
@@ -91,29 +91,29 @@ DomainUndefineFlagValues :: enum u32 {
 }
 
 ConnectListAllStoragePoolsFlags :: enum u32 {
-  VIR_CONNECT_LIST_STORAGE_POOLS_INACTIVE      = 1 << 0, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_ACTIVE        = 1 << 1, // (Since: 0.10.2)
+  Inactive    = 1 << 0, // (Since: 0.10.2)
+  Active      = 1 << 1, // (Since: 0.10.2)
 
-  VIR_CONNECT_LIST_STORAGE_POOLS_PERSISTENT    = 1 << 2, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_TRANSIENT     = 1 << 3, // (Since: 0.10.2)
+  Persistent  = 1 << 2, // (Since: 0.10.2)
+  Transient   = 1 << 3, // (Since: 0.10.2)
 
-  VIR_CONNECT_LIST_STORAGE_POOLS_AUTOSTART     = 1 << 4, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_NO_AUTOSTART  = 1 << 5, // (Since: 0.10.2)
+  Autostart   = 1 << 4, // (Since: 0.10.2)
+  NoAutostart = 1 << 5, // (Since: 0.10.2)
 
-  VIR_CONNECT_LIST_STORAGE_POOLS_DIR           = 1 << 6, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_FS            = 1 << 7, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_NETFS         = 1 << 8, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_LOGICAL       = 1 << 9, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_DISK          = 1 << 10, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_ISCSI         = 1 << 11, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_SCSI          = 1 << 12, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_MPATH         = 1 << 13, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_RBD           = 1 << 14, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_SHEEPDOG      = 1 << 15, // (Since: 0.10.2)
-  VIR_CONNECT_LIST_STORAGE_POOLS_GLUSTER       = 1 << 16, // (Since: 1.2.1)
-  VIR_CONNECT_LIST_STORAGE_POOLS_ZFS           = 1 << 17, // (Since: 1.2.8)
-  VIR_CONNECT_LIST_STORAGE_POOLS_VSTORAGE      = 1 << 18, // (Since: 3.1.0)
-  VIR_CONNECT_LIST_STORAGE_POOLS_ISCSI_DIRECT  = 1 << 19  // (Since: 5.6.0)
+  Dir         = 1 << 6, // (Since: 0.10.2)
+  FS          = 1 << 7, // (Since: 0.10.2)
+  NetFS       = 1 << 8, // (Since: 0.10.2)
+  Logical     = 1 << 9, // (Since: 0.10.2)
+  Disk        = 1 << 10, // (Since: 0.10.2)
+  Iscsi       = 1 << 11, // (Since: 0.10.2)
+  SCSI        = 1 << 12, // (Since: 0.10.2)
+  MPath       = 1 << 13, // (Since: 0.10.2)
+  RBD         = 1 << 14, // (Since: 0.10.2)
+  Sheepdog    = 1 << 15, // (Since: 0.10.2)
+  Gluster     = 1 << 16, // (Since: 1.2.1)
+  ZFS         = 1 << 17, // (Since: 1.2.8)
+  VStorage    = 1 << 18, // (Since: 3.1.0)
+  ISCSIDirect = 1 << 19  // (Since: 5.6.0)
 }
 
 DomainInfo :: struct {

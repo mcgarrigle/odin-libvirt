@@ -80,13 +80,6 @@ create_domain_table :: proc(domain: vir.DomainDetails) -> ^table.Table {
   return tbl
 }
 
-
-error_handler :: proc "cdecl" (data: rawptr, err: ^vir.Error) {
-  // context := runtime.default_context()
-  // fmt.println("ERR:", err)
-  // os.write_string(os.stdout, "err")
-}
-
 main :: proc() {
 
   // conn := vir.ConnectOpen(URL)
@@ -94,10 +87,6 @@ main :: proc() {
 
   names := []string{"dwt", "smol", "wee"}
   cluster := cluster_init(names)
-  // vir.ConnSetErrorFunc(cluster[0].conn, nil, error_handler)
-  // vir.ConnSetErrorFunc(cluster[1].conn, nil, error_handler)
-  // vir.ConnSetErrorFunc(cluster[2].conn, nil, error_handler)
-
   domains := cluster_list(cluster)
   // tab := create_domain_list_table(domains)
   // render_table(tab, .Lines)
