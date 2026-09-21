@@ -25,6 +25,17 @@ VIR_UUID_BUFLEN :: 16
 VIR_UUID_STRING_LEN :: 36
 VIR_UUID_STRING_BUFLEN :: 36+1
 
+NodeInfo :: struct {
+  model:   [32]u8,   // string indicating the CPU model
+  memory:  c.ulong,  // memory size in kilobytes
+  cpus:    c.uint,   // the number of active CPUs
+  mhz:     c.uint,   // expected CPU frequency, 0 if not known or on unusual architectures
+  nodes:   c.uint,   // the number of NUMA cell, 1 for unusual NUMA topologies or uniform memory access; check capabilities XML for the actual NUMA topology
+  sockets: c.uint,   // number of CPU sockets per node if nodes > 1, 1 in case of unusual NUMA topology
+  cores:   c.uint,   // number of cores per socket, total number of processors in case of unusual NUMA topology
+  threads: c.uint    // number of threads per core, 1 in case of unusual numa topology
+}
+
 DomainState :: enum u32 {
   NoState     = 0,  // no state
   Running     = 1,  // the domain is running
@@ -162,6 +173,8 @@ foreign vir {
 
   @(link_name="virConnectGetURI")
   _ConnectGetURI :: proc(conn: ^Connect) -> cstring ---
+
+  NodeGetInfo :: proc(conn: ^Connect, info: ^NodeInfo) ---
 
   DomainLookupByName :: proc(conn: ^Connect, name: cstring) -> ^Domain ---
 
